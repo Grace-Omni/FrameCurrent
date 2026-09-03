@@ -1,0 +1,24 @@
+FrameCurrent / 连续影像
+Copyright 2026 FrameCurrent contributors
+
+This product includes software, documentation, and original repository visual
+assets developed for FrameCurrent and distributed under the Apache License 2.0.
+
+“连续影像”, “FrameCurrent”, their wordmarks, and the associated production
+logos are trademarks claimed by the FrameCurrent project owner. All trademark
+rights are reserved. The Apache License 2.0 does not grant permission to use
+these marks except for reasonable and customary use in describing the origin of
+the Work and reproducing this NOTICE. See TRADEMARKS.md.
+
+The existing production logo assets and `web/assets/channel-art-atlas.png` may
+be included in copies and derivative distributions of this repository under
+Apache-2.0. Their inclusion does not imply endorsement or authorize a modified
+product to present itself as an official FrameCurrent release.
+
+This project is not affiliated with, endorsed by, or sponsored by MiniMax, fal,
+Apple, or any other model or platform provider. Third-party names are used only
+to describe interoperability.
+
+Generated videos, user-supplied reference images, music, stock media, and other
+assets not included in the repository may have separate rights and provider
+terms. See ASSETS.md before redistributing such media.

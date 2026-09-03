@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 112" role="img" aria-labelledby="title desc">
+  <title id="title">连续影像 FrameCurrent</title>
+  <desc id="desc">连续影像的中文与英文品牌组合标志</desc>
+  <rect width="560" height="112" rx="22" fill="#080a09"/>
+  <g transform="translate(10 18)">
+    <path d="M59.3 18.8A29 29 0 1 0 58.8 56.9" fill="none" stroke="#c8ff62" stroke-width="10" stroke-linecap="round"/>
+    <path d="M34.4 25.4c0-2.4 2.6-3.7 4.6-2.5l19 11.8c1.9 1.2 1.9 3.8 0 5L39 51.5c-2 1.2-4.6-.2-4.6-2.5V25.4Z" fill="#ff5d50"/>
+  </g>
+  <text x="101" y="51" fill="#f3f6f0" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760" letter-spacing="2">连续影像</text>
+  <text x="104" y="82" fill="#919c94" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="6">FRAMECURRENT</text>
+</svg>

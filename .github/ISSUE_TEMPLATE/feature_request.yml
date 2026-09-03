@@ -1,0 +1,34 @@
+name: Feature request
+description: Propose a user outcome for the local continuous-video workflow.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What is difficult today, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the result, not only a specific implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Does this affect paid generation, Key handling or public deployment?
+      options:
+        - No
+        - Yes
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: What observable result would prove this is complete?

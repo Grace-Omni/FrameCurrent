@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible local-app problem without private media or credentials.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never include a fal Key, reference image, generated private media, manifest, provider receipt, or local absolute path.
+  - type: input
+    id: version
+    attributes:
+      label: FrameCurrent version
+      placeholder: "e.g. 1.6.1 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS and Mac model
+      placeholder: "macOS version, Apple Silicon or Intel"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use non-sensitive sample descriptions and state whether a paid request was actually submitted.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed credentials, session IDs, private prompts, media and absolute paths.
+          required: true

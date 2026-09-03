@@ -1,0 +1,73 @@
+name: Offline verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: framecurrent-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: macOS offline checks
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Reject private runtime artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden="$(git ls-files | grep -E '(^|/)(runtime|real-test)/|(^|/)manifest\.json$|\.(mp4|mov|m4v|webm|part|partial|pem|key|p12|mobileprovision)$|(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)"
+          if [[ -n "$forbidden" ]]; then
+            echo "Forbidden tracked artifacts:"
+            echo "$forbidden"
+            exit 1
+          fi
+          large="$(find . -type f -size +10M -not -path './.git/*' -print)"
+          if [[ -n "$large" ]]; then
+            echo "Unexpected files larger than 10 MB:"
+            echo "$large"
+            exit 1
+          fi
+
+      - name: Check Python and run offline tests
+        run: |
+          /usr/bin/python3 -m py_compile app.py
+          /usr/bin/python3 -m unittest discover -s tests -v
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check web/app.js
+          node --check web/player.js
+
+      - name: Type-check Swift media tools
+        run: |
+          for source_file in scripts/*.swift; do
+            /usr/bin/swiftc -typecheck "$source_file"
+          done
+
+      - name: Check local health endpoint without provider access
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 app.py --no-open --port 4173 > "$RUNNER_TEMP/framecurrent.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/api/health > /dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat "$RUNNER_TEMP/framecurrent.log"
+          exit 1
