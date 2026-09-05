@@ -11,13 +11,18 @@ const MAX_LOCAL_ESTIMATED_BUDGET_USD = 150;
 const MAX_CLIP_MARKERS = 60;
 
 const state = {
-  durationSeconds: 300,
+  durationSeconds: 30,
+  serverStatus: "checking",
+  activeGeneration: null,
+  healthChecking: false,
+  initialized: false,
   durationValid: true,
   durationMode: "fixed",
   activeChannelId: "hand_drawn_fantasy",
   channelSessions: {},
   channelDrafts: {},
   pendingRequestIds: {},
+  reconcilingStarts: {},
   restoring: false,
   restoreEpoch: 0,
   aspectRatio: "16:9",
@@ -158,28 +163,54 @@ function formatDuration(seconds, empty = "00:00") {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    cache: "no-store",
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(data.error || data.message || `请求失败 (${response.status})`);
-    error.status = response.status;
-    throw error;
+  const { timeoutMs = 20000, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(path, {
+      ...fetchOptions,
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(data.error || data.message || `请求失败 (${response.status})`);
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  } finally {
+    window.clearTimeout(timer);
   }
-  return data;
 }
 
 async function checkHealth() {
+  if (state.healthChecking) return;
+  state.healthChecking = true;
+  $("#retryConnection").disabled = true;
   try {
-    const health = await request("/api/health");
-    $("#healthDot").classList.toggle("ok", Boolean(health.ok));
-    $("#healthText").textContent = health.ok ? "AI 服务在线" : "AI 服务暂不可用";
+    const health = await request("/api/health", { timeoutMs: 4000 });
+    if (!health.ok || health.app_id !== "framecurrent") throw new Error("本机服务不匹配");
+    state.serverStatus = "online";
+    state.activeGeneration = presetProfiles[health.active_session?.preset] ? health.active_session : null;
+    if (state.activeGeneration) rememberSession(state.activeGeneration.preset, state.activeGeneration.session_id);
+    $("#healthDot").classList.add("ok");
+    $("#healthText").textContent = "本机服务已连接";
+    if (state.initialized && !state.starting && !state.restoring
+        && state.activeGeneration?.preset === state.activeChannelId
+        && state.sessionId !== state.activeGeneration.session_id) {
+      await loadChannelSession(state.activeChannelId);
+    }
   } catch (_) {
+    state.serverStatus = "offline";
     $("#healthDot").classList.remove("ok");
-    $("#healthText").textContent = "AI 服务未连接";
+    $("#healthText").textContent = "本机服务未连接";
+  } finally {
+    state.healthChecking = false;
+    $("#retryConnection").disabled = false;
+    $("#connectionNotice").hidden = state.serverStatus !== "offline";
+    updateStartEligibility();
   }
 }
 
@@ -241,7 +272,7 @@ function updateDuration() {
   if (valid) {
     const clips = plannedClipCount();
     helper.textContent = `${formatDuration(total)} · 预计拆分为${clips}幕连续生成`;
-    if (!state.sessionId || !state.busy) {
+    if (!state.sessionId) {
       renderClipGrid(clips, 0, "");
       $("#generatedTime").textContent = `00:00 / ${formatDuration(total)}`;
     }
@@ -288,7 +319,23 @@ function updateStartEligibility() {
     state.channelSessions[state.activeChannelId]
     && state.sessionId !== state.channelSessions[state.activeChannelId]
   );
-  $("#startButton").disabled = state.busy || state.starting || state.paymentDialogOpen || state.restoring || state.imagePreparing || unresolvedSession || !durationReady || !hasSubject || !hasScene || !state.keyVerified;
+  const otherActive = state.activeGeneration && state.activeGeneration.preset !== state.activeChannelId;
+  let reason = "";
+  if (state.serverStatus !== "online") reason = state.serverStatus === "offline" ? "请先重新启动本机服务，然后点击上方“重新连接”。" : "正在连接本机服务…";
+  else if (otherActive) reason = "另一个频道正在生成，请先返回该频道查看或停止续写。";
+  else if (state.busy || (state.activeGeneration && !unresolvedSession)) reason = "这个频道正在生成，已完成的片段会自动保存。";
+  else if (state.starting || state.paymentDialogOpen) reason = "正在确认或启动，请勿重复提交。";
+  else if (state.restoring || unresolvedSession) reason = "正在找回这个频道的节目；无法恢复时可点击当前频道重试。";
+  else if (state.reconcilingStarts[state.activeChannelId]) reason = "正在核对上一次开播结果，请稍候。";
+  else if (state.imagePreparing) reason = "正在准备参考图，请稍候。";
+  else if (!durationReady) reason = "请填写10秒到30分钟之间的成片时长。";
+  else if (!hasSubject || !hasScene) reason = "请在节目设置中补全固定主体与固定世界。";
+  else if (!state.keyVerified) reason = "下一步：输入并验证你的 fal API Key。";
+  $("#startButton").disabled = Boolean(reason);
+  $("#startHelp").textContent = reason || "准备好了。点击开播后，仍需核对并确认本次费用。";
+  $("#activeNotice").hidden = !otherActive;
+  if (otherActive) $("#activeNoticeText").textContent = `${presetProfiles[state.activeGeneration.preset].name}仍在生成。换台不会停止任务，已提交画面可能计费。`;
+  document.querySelectorAll("[data-preset]").forEach((card) => card.classList.toggle("broadcasting", card.dataset.preset === state.activeGeneration?.preset));
   document.querySelectorAll('input[name="aspectRatio"]').forEach((input) => {
     input.disabled = state.imagePreparing;
   });
@@ -428,7 +475,7 @@ function selectChannel(preset, restoreSession = true) {
   if (
     restoreSession
     && state.activeChannelId === preset
-    && (state.sessionId || !state.channelSessions[preset])
+    && (state.sessionId === state.channelSessions[preset] || !state.channelSessions[preset])
   ) return;
   if (state.activeChannelId && state.activeChannelId !== preset) {
     saveActiveChannelDraft();
@@ -462,7 +509,7 @@ function selectChannel(preset, restoreSession = true) {
   $("#selectedChannelName").textContent = displayName;
   $("#playerChannelName").textContent = `${profile.number} · ${displayName}`;
   $("#stationChannelLabel").textContent = `${profile.number} · ${displayName}`;
-  $("#liveBadge span").textContent = `AI LIVE · ${profile.number}`;
+  $("#liveBadge span").textContent = `AI VIDEO · ${profile.number}`;
   $("#presetHint").textContent = profile.hint;
   [
     ["#subjectLock", "subject", "subjectEdited", "subjectLock"],
@@ -569,15 +616,21 @@ async function verifyApiKey() {
   try {
     const result = await request("/api/key/check", {
       method: "POST",
+      timeoutMs: 90000,
       body: JSON.stringify({ api_key: apiKey }),
     });
+    if ($("#apiKey").value.trim() !== apiKey) {
+      state.verifiedKey = "";
+      setKeyStatus("密钥已改变，请验证当前输入的密钥", "error");
+      return;
+    }
     if (result.valid === false || result.ok === false) throw new Error(result.message || "密钥验证失败");
     state.keyVerified = true;
     state.verifiedKey = apiKey;
     const balanceText = result.balance && result.balance.current_balance !== null
       ? ` · 可用余额 ${money(result.balance.current_balance)}`
       : ` · ${result.balance_note || "请确认所属工作区有可用余额"}`;
-    setKeyStatus(`密钥已验证，H3 Max连接正常${balanceText}`, "ok");
+    setKeyStatus(`账户连接已验证${balanceText}；实际生成权限以提交结果为准`, "ok");
     toast("连接成功，可以开始连续生成");
   } catch (error) {
     state.verifiedKey = "";
@@ -730,7 +783,7 @@ function publicProgressMessage(session) {
   if (session.status === "finalizing") return "全部画面已生成，正在合成完整视频";
   if (session.status === "stopped") return `已保存${clips.length}幕画面`;
   if (["failed", "interrupted", "invalid"].includes(session.status)) return "已完成的画面仍然保留";
-  if (session.status === "preparing") return "正在准备第一幕";
+  if (session.status === "preparing") return "正在检查本地媒体工具，尚未提交付费生成";
   return unlimited ? `AI频道正在续写第${clips.length + 1}幕` : `AI正在续写第${Math.min(clips.length + 1, total)}幕`;
 }
 
@@ -760,11 +813,14 @@ function nextSceneFor(session) {
 
 function friendlyError(message, fallback = "创作暂时中断，请稍后重试。已完成的内容仍然保留。") {
   const value = String(message || "").toLowerCase();
+  if (value.includes("本地环境")) return "本地环境未就绪。请运行 doctor.command 检查工具与目录权限；此检查失败时不会提交付费生成。";
+  if (value.includes("本地视频处理") || value.includes("视频下载未通过")) return "视频处理或下载检查未通过。可下载下方已保存片段；请先运行 doctor.command，不要反复付费开播。";
+  if (value.includes("已有一个生成任务")) return "另一个频道正在生成，请返回该频道查看或停止续写。";
   if (value.includes("余额") || value.includes("balance")) return "fal账户余额不足，或这把Key所属的工作区尚未充值。";
   if (value.includes("budget") || value.includes("预算")) return "本地预计费用上限不符合要求，请调整后重试。";
   if (value.includes("api key") || value.includes("unauthorized") || value.includes("401") || value.includes("密钥")) return "API Key无效或没有可用权限，请检查后重试。";
-  if (value.includes("safety") || value.includes("安全")) return "这段描述未通过内容安全检查，请调整画面描述。";
-  if (value.includes("network") || value.includes("timeout") || value.includes("连接")) return "连接暂时不稳定，请稍后重试。";
+  if (value.includes("safety") || value.includes("内容安全")) return "这段描述未通过内容安全检查，请调整画面描述。";
+  if (value.includes("network") || value.includes("timeout") || value.includes("abort") || value.includes("fetch") || value.includes("连接")) return "连接暂时中断或请求超时。请确认本机启动终端仍在运行，再重新连接；开播结果未知时不要更换设备重复提交。";
   return fallback;
 }
 
@@ -806,8 +862,32 @@ function updateCompletionActions(session) {
   if (complete && !ready) $("#progressMessage").textContent = "画面已完成，正在合成完整视频";
 }
 
+function renderSavedClips(session) {
+  const clips = session.clips || [];
+  const container = $("#savedClipLinks");
+  const signature = `${session.session_id || ""}:${clips.map((clip) => clip.url).join("|")}`;
+  $("#savedClips").hidden = !clips.length;
+  if (container.dataset.signature === signature) return;
+  container.dataset.signature = signature;
+  container.replaceChildren();
+  $("#savedClipsSummary").textContent = `已保存片段 · ${clips.length}幕 · 可单独下载`;
+  clips.forEach((clip, index) => {
+    // Only link to this session's same-origin media, never arbitrary URLs.
+    const prefix = `/media/${encodeURIComponent(session.session_id)}/`;
+    if (typeof clip.url !== "string" || !clip.url.startsWith(prefix) || clip.url.includes("..")) return;
+    const link = document.createElement("a");
+    link.href = clip.url;
+    link.download = `FrameCurrent-${session.session_id}-${index + 1}.mp4`;
+    link.textContent = `第${index + 1}幕 · ${formatDuration(clip.duration)} ↓`;
+    container.append(link);
+  });
+}
+
 function updateMonitor(session) {
   state.latestSession = session;
+  if (!terminalStatuses.has(session.status)) state.activeGeneration = { session_id: session.session_id, preset: session.config?.preset || state.activeChannelId };
+  else if (state.activeGeneration?.session_id === session.session_id) state.activeGeneration = null;
+  renderSavedClips(session);
   const clips = session.clips || [];
   const config = session.config || {};
   const unlimited = config.duration_mode === "unlimited";
@@ -1114,6 +1194,26 @@ function clearPendingStart(channelId) {
   persistPendingStarts();
 }
 
+async function reconcilePendingStart(channelId, sessionId) {
+  const pending = state.pendingRequestIds[channelId];
+  const requestId = typeof pending === "string" ? pending : pending?.id;
+  if (!requestId) return;
+  if (state.reconcilingStarts[channelId]) return;
+  state.reconcilingStarts[channelId] = true;
+  updateStartEligibility();
+  try {
+    const result = await request("/api/session/recover", {
+      method: "POST", body: JSON.stringify({ client_request_id: requestId }),
+    });
+    // A different tab may have started another task; never clear an unproven ID.
+    if (result.session_id === sessionId && state.pendingRequestIds[channelId] === pending) clearPendingStart(channelId);
+  } catch (_) { /* Keep unknown requests for safe idempotent recovery. */ }
+  finally {
+    delete state.reconcilingStarts[channelId];
+    updateStartEligibility();
+  }
+}
+
 function resetMonitorForChannel() {
   window.clearTimeout(state.pollTimer);
   state.sessionId = null;
@@ -1138,6 +1238,7 @@ function resetMonitorForChannel() {
   if (state.durationMode === "unlimited") renderUnlimitedClipGrid(0, "");
   else renderClipGrid(plannedClipCount(), 0, "");
   renderClipTimings({ clips: [], status: "idle" });
+  renderSavedClips({ clips: [] });
   updateCompletionActions({ status: "idle" });
   $("#stopButton").disabled = true;
   $("#monitorError").hidden = true;
@@ -1212,6 +1313,7 @@ async function loadChannelSession(channelId) {
     }
     applyAspectRatio(session.config?.aspect_ratio || "16:9", false);
     state.sessionId = session.session_id;
+    reconcilePendingStart(channelId, session.session_id);
     updateMonitor(session);
     if (!terminalStatuses.has(session.status)) pollSession();
   } catch (error) {
@@ -1276,8 +1378,8 @@ function requestPaidStartConfirmation() {
   $("#paidDialogMode").textContent = unlimited ? "参考生成费率" : "本次预计费用";
   $("#paidDialogCost").textContent = unlimited ? `${money(rate * 60)} / 分钟` : money(fixedBudget);
   $("#paidDialogDetail").textContent = unlimited
-    ? `${resolution} · 持续至手动停止或达到下方上限`
-    : `${formatDuration(state.durationSeconds)} · ${resolution} · ${money(rate)}/秒`;
+    ? `${$("#selectedChannelName").textContent} · ${state.aspectRatio} · ${resolution} · 持续至停止或达到下方上限`
+    : `${$("#selectedChannelName").textContent} · 成片${formatDuration(state.durationSeconds)} · ${state.aspectRatio} · ${resolution} · ${money(rate)}/秒（生成需另行等待）`;
   budgetField.hidden = !unlimited;
   budgetInput.min = minimumBudget.toFixed(2);
   budgetInput.max = MAX_LOCAL_ESTIMATED_BUDGET_USD.toFixed(2);
@@ -1364,7 +1466,7 @@ async function startSession(event) {
     state.channelSessions[state.activeChannelId]
     && state.sessionId !== state.channelSessions[state.activeChannelId]
   );
-  if (state.busy || state.starting || state.restoring || state.imagePreparing || unresolvedSession) return;
+  if (state.busy || state.starting || state.restoring || state.imagePreparing || unresolvedSession || state.reconcilingStarts[state.activeChannelId] || state.serverStatus !== "online" || state.activeGeneration) return;
   if (state.durationMode === "fixed" && !state.durationValid) {
     toast("请先设置10秒到30分钟之间的创作时长");
     return;
@@ -1638,12 +1740,31 @@ $("#verifyKeyButton").addEventListener("click", verifyApiKey);
 $("#configForm").addEventListener("submit", startSession);
 $("#stopButton").addEventListener("click", stopSession);
 
-checkHealth();
 state.channelDrafts = recalledChannelDrafts();
+state.channelSessions = recalledSessions();
 state.pendingRequestIds = recalledPendingStarts();
 selectChannel("hand_drawn_fantasy", false);
 applyDurationMode("fixed");
 applyAspectRatio("16:9", false);
 updateDuration();
 updateStartEligibility();
-restoreCurrentSession();
+async function initializeSession() {
+  await checkHealth();
+  if (state.activeGeneration) selectChannel(state.activeGeneration.preset, false);
+  await loadChannelSession(state.activeChannelId);
+  state.initialized = true;
+}
+$("#retryConnection").addEventListener("click", async () => {
+  await checkHealth();
+  if (!state.busy && !state.restoring) await loadChannelSession(state.activeChannelId);
+});
+$("#returnActiveChannel").addEventListener("click", () => {
+  if (state.activeGeneration) selectChannel(state.activeGeneration.preset);
+});
+$("#openGuideButton").addEventListener("click", () => {
+  $("#usageGuide").open = true;
+  $("#usageGuide summary").focus();
+  $("#usageGuide").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+const initialization = initializeSession();
+window.setInterval(checkHealth, 15000);

@@ -23,22 +23,24 @@
       </span>
     </a>
     <div class="topbar-status">
-      <span class="on-air-label">ON AIR</span>
-      <div class="system-pill"><i id="healthDot"></i><span id="healthText">AI 服务连接中</span></div>
+      <button class="help-link" id="openGuideButton" type="button">使用指南</button>
+      <div class="system-pill" role="status"><i id="healthDot"></i><span id="healthText">正在连接本机服务</span></div>
     </div>
   </header>
 
   <main class="shell">
+    <div class="connection-notice" id="connectionNotice" role="status" hidden><p>本机服务连接中断。请双击 run.command，保持启动终端开启；不要重复确认开播。</p><button id="retryConnection" type="button">重新连接</button></div>
+    <div class="active-notice" id="activeNotice" role="status" hidden><p id="activeNoticeText"></p><button id="returnActiveChannel" type="button">返回正在生成的频道</button></div>
     <section class="station-intro">
       <div>
         <p class="eyebrow">FRAMECURRENT · CONTINUOUS GENERATIVE CINEMA</p>
         <h1>换一个频道，<em>让画面继续生长。</em></h1>
-        <p class="hero-copy">选择频道与观看时长，连续影像会边生成、边缓存、边播放；也可以开启不限时模式，直到你主动停播或达到本地预计费用上限。</p>
+        <p class="hero-copy">选一个频道，让短片逐幕延续，最后下载一条完整视频。生成需要等待，缓存不足时会暂停预览；它不是实时直播。</p>
       </div>
       <div class="station-ident" aria-label="电视台状态">
-        <span>NOW BROADCASTING</span>
+        <span>SELECTED CHANNEL</span>
         <b id="stationChannelLabel">CH 01 · 日系手绘奇幻</b>
-        <small>每一幕从上一幕继续向前</small>
+        <small>选择不收费 · 确认后才开始生成</small>
       </div>
     </section>
 
@@ -48,7 +50,7 @@
         <p>像电视遥控器一样换台，频道会自动载入对应的角色、世界与镜头语言。</p>
       </div>
       <input id="preset" name="preset" type="hidden" value="hand_drawn_fantasy">
-      <div class="channel-strip" id="presetGrid" role="list" aria-label="连续影像频道">
+      <div class="channel-strip" id="presetGrid" role="group" aria-label="连续影像频道">
         <button class="channel-card fantasy selected" type="button" data-preset="hand_drawn_fantasy" aria-pressed="true"><span class="channel-number">CH 01</span><span class="channel-copy"><b>日系手绘奇幻</b><small>天空岛 · 飞行冒险</small></span></button>
         <button class="channel-card scifi" type="button" data-preset="cinematic_scifi" aria-pressed="false"><span class="channel-number">CH 02</span><span class="channel-copy"><b>科幻史诗电影</b><small>轨道巨构 · 深空航行</small></span></button>
         <button class="channel-card variety" type="button" data-preset="studio_variety" aria-pressed="false"><span class="channel-number">CH 03</span><span class="channel-copy"><b>高能棚内综艺</b><small>LED舞台 · 追光现场</small></span></button>
@@ -56,29 +58,29 @@
         <button class="channel-card costume" type="button" data-preset="costume_drama" aria-pressed="false"><span class="channel-number">CH 05</span><span class="channel-copy"><b>AI古装短剧</b><small>月下宫城 · 江湖悬念</small></span></button>
         <button class="channel-card custom" type="button" data-preset="custom_channel" aria-pressed="false"><span class="channel-number">CH ＋</span><span class="channel-copy"><b>自定义频道</b><small>创建你的专属节目</small></span></button>
       </div>
-      <div class="channel-description"><span id="presetHint">原创日系手绘动画质感；天空岛、强风与云海形成鲜明层次，建议16:9。</span><small class="preset-behavior">换台会更新节目设定；你手动修改过的内容会保留。</small></div>
+      <div class="channel-description"><span id="presetHint">原创日系手绘动画质感；天空岛、强风与云海形成鲜明层次，建议16:9。</span><small class="preset-behavior">频道图为风格示意。换台不收费，也不会停止正在生成的节目。</small></div>
     </section>
 
     <section class="panel setup-panel">
       <div class="section-heading">
         <div>
           <span class="step">节目单</span>
-          <h2>设置观看方式</h2>
+          <h2>设置节目长度</h2>
         </div>
-        <p>预设结束时间，或让频道持续播到你主动停止。</p>
+        <p>这里设置的是成片长度，不是等待时间。初次建议先试30秒。</p>
       </div>
       <div class="setup-grid">
         <div class="duration-builder">
           <div class="duration-mode-switch" role="radiogroup" aria-label="观看时长模式">
-            <label class="selected"><input type="radio" name="durationMode" value="fixed" checked><span>定时观看</span></label>
+            <label class="selected"><input type="radio" name="durationMode" value="fixed" checked><span>指定成片长度</span></label>
             <label><input type="radio" name="durationMode" value="unlimited"><span>不限时长</span></label>
           </div>
           <div id="fixedDurationControls">
-            <div class="setting-label"><b>预设观看时长</b><span>10秒–30分钟 · 精确到秒</span></div>
+            <div class="setting-label"><b>成片时长</b><span>10秒–30分钟 · 精确到秒</span></div>
             <div class="time-inputs" role="group" aria-label="自定义观看时长">
-              <label><input id="durationMinutes" type="number" min="0" max="30" inputmode="numeric" value="5"><span>分钟</span></label>
+              <label><input id="durationMinutes" type="number" min="0" max="30" inputmode="numeric" value="0" aria-describedby="durationHelp"><span>分钟</span></label>
               <i>:</i>
-              <label><input id="durationSeconds" type="number" min="0" max="59" inputmode="numeric" value="0"><span>秒</span></label>
+              <label><input id="durationSeconds" type="number" min="0" max="59" inputmode="numeric" value="30" aria-describedby="durationHelp"><span>秒</span></label>
             </div>
             <div class="quick-times" aria-label="快捷填入常用时长">
               <span>快捷填入</span>
@@ -87,7 +89,7 @@
               <button type="button" data-duration="300">5分钟</button>
               <button type="button" data-duration="600">10分钟</button>
             </div>
-            <p class="setting-help" id="durationHelp">05:00 · 预计拆分为30幕连续生成</p>
+            <p class="setting-help" id="durationHelp">00:30 · 预计拆分为3幕连续生成</p>
           </div>
           <div class="unlimited-note" id="unlimitedDurationNote" hidden><b>持续播出，手动停播</b><p>频道会逐幕生成，达到本地预计费用上限时自动收台并合并已完成节目。</p></div>
         </div>
@@ -212,18 +214,20 @@
               <button class="verify-button" id="verifyKeyButton" type="button">连接并验证</button>
             </div>
           </label>
-          <div class="key-status" id="keyStatus" aria-live="polite">输入密钥后验证连接</div>
+          <div class="key-status" id="keyStatus" aria-live="polite">验证只检查账户连接，不生成视频。</div>
+          <a class="key-help" href="https://fal.ai/dashboard/keys" target="_blank" rel="noopener noreferrer">在 fal 获取 API Key ↗</a>
         </div>
 
-        <button class="primary-button" id="startButton" type="submit" disabled>
+        <button class="primary-button" id="startButton" type="submit" aria-describedby="startHelp" disabled>
           <span id="startButtonLabel">开播这个频道</span><b>▶</b>
         </button>
+        <p class="start-help" id="startHelp" role="status">下一步：输入并验证你的 fal API Key。</p>
         <p class="form-note">每一幕完成后都会自动保存在作品中；中途停止也不会丢失已经生成的内容。</p>
       </form>
 
       <aside class="panel live-panel" id="monitorPanel">
         <div class="section-heading compact">
-          <div><span class="step">直播画面</span><h2 id="playerChannelName">CH 01 · 日系手绘奇幻</h2></div>
+          <div><span class="step">节目预览</span><h2 id="playerChannelName">CH 01 · 日系手绘奇幻</h2></div>
           <span class="monitor-state idle" id="monitorState">准备就绪</span>
         </div>
 
@@ -235,7 +239,7 @@
             <h3>频道尚未开播</h3>
             <p>完成开播设置后按“开播这个频道”。</p>
           </div>
-          <div class="live-badge" id="liveBadge"><i></i><span>AI LIVE</span></div>
+          <div class="live-badge" id="liveBadge"><i></i><span>AI VIDEO</span></div>
           <div class="buffer-notice" id="bufferNotice" hidden>AI正在准备下一幕，画面会从这里继续</div>
           <div class="preview-caption" id="previewCaption" hidden>
             <b id="previewElapsed">00:00</b>
@@ -251,7 +255,7 @@
             <span id="progressPercent">0%</span>
           </div>
 
-          <div class="clip-overview"><span>节目缓存</span><b id="clipSummary">0 / 30幕</b></div>
+          <div class="clip-overview"><span>节目缓存</span><b id="clipSummary">0 / 3幕</b></div>
           <div class="clip-grid" id="clipGrid" aria-label="每幕生成状态"></div>
 
           <section class="clip-timing-panel" id="clipTimingPanel" aria-label="每幕生成计时">
@@ -266,10 +270,10 @@
           </section>
 
           <dl class="telemetry-grid">
-            <div><dt>已生成</dt><dd id="generatedTime">00:00 / 05:00</dd></div>
+            <div><dt>已生成</dt><dd id="generatedTime">00:00 / 00:30</dd></div>
             <div><dt>可播放</dt><dd id="playableTime">00:00</dd></div>
             <div><dt>预计剩余</dt><dd id="etaTime">—</dd></div>
-            <div><dt>本地费用估算</dt><dd id="spentCost">$0.00 / $15.00</dd></div>
+            <div><dt>本地费用估算</dt><dd id="spentCost">$0.00</dd></div>
           </dl>
 
           <div class="next-scene">
@@ -278,6 +282,7 @@
           </div>
 
           <div class="monitor-error" id="monitorError" hidden></div>
+          <details class="saved-clips" id="savedClips" hidden><summary id="savedClipsSummary">已保存片段</summary><p>中断后也可逐幕下载；完整成片在全部生成并合成后提供。</p><div id="savedClipLinks"></div></details>
           <div class="monitor-actions">
             <a class="primary-button disabled" id="downloadButton" href="#" aria-disabled="true" download>下载完整视频 MP4 <b>↓</b></a>
             <a class="secondary-button disabled" id="playerButton" href="#" aria-disabled="true">播放完整视频 <b>↗</b></a>
@@ -287,11 +292,20 @@
       </aside>
     </section>
 
+    <details class="panel usage-guide" id="usageGuide">
+      <summary>第一次使用？从这里开始</summary>
+      <div class="guide-grid">
+        <section><h3>01 · 先试一小段</h3><p>选一个频道，用默认30秒、480P开始。频道图片只表达风格，生成内容每次可能不同；预设不是自带影片。</p></section>
+        <section><h3>02 · 确认后才付费</h3><p>输入你自己的 fal Key 并验证。点击开播后核对节目与预计费用，最后确认才提交生成。不限时也会持续产生费用。</p></section>
+        <section><h3>03 · 检查后再用</h3><p>等待缓存，完成后播放并下载 MP4。接缝对齐不代表动作逻辑正确，建议先检查短样片，再延长节目。</p></section>
+      </div>
+      <p class="guide-footnote">请保持启动终端开启。换台只切换观看，不停止生成；退出前先停止续写并保存作品。已提交的一幕仍可能计费。作品保存在本机 runtime/sessions/，Key 不写入作品文件。</p>
+    </details>
   </main>
 
   <footer class="site-footer shell">
     <a class="footer-brand" href="/" aria-label="返回连续影像首页"><img src="/assets/logo-mark.svg" alt=""><span><b>连续影像</b><small>FRAMECURRENT</small></span></a>
-    <span class="footer-version"><b>V1.6.1</b><small>MACOS LOCAL</small></span>
+    <span class="footer-version"><b>V1.6.2</b><small>MACOS LOCAL</small></span>
   </footer>
 
   <dialog class="paid-dialog" id="paidDialog" aria-labelledby="paidDialogTitle">
@@ -303,8 +317,8 @@
       <h2 id="paidDialogTitle">确认开播</h2>
       <div class="paid-dialog-cost">
         <span id="paidDialogMode">本次预计费用</span>
-        <strong id="paidDialogCost">$15.00</strong>
-        <p id="paidDialogDetail">5分钟 · 480P · 按内置参考费率计算</p>
+        <strong id="paidDialogCost">—</strong>
+        <p id="paidDialogDetail">按内置参考费率计算，等待时间另计</p>
       </div>
       <label class="field full paid-dialog-budget" id="paidDialogBudgetField" hidden>
         <span>本地预计费用上限（USD）</span>

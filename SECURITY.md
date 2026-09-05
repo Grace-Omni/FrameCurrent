@@ -6,7 +6,9 @@ Only the latest `main` branch or most recent tagged release is expected to recei
 
 ## Reporting a vulnerability
 
-Do not publish API Keys, private prompts, reference images, provider receipts, or exploitable details in a public Issue. After the GitHub repository is created, enable GitHub Private Vulnerability Reporting and use that channel. Until then, contact the maintainer privately through the project owner’s established channel.
+Do not publish API Keys, private prompts, reference images, provider receipts, or exploitable details in a public Issue. The repository is currently in private review. A public private-reporting channel has not yet been verified; enabling and testing one is a required gate before making the repository public. Do not assume an unlisted email address or a public Issue is a confidential reporting channel.
+
+During private review, invited reviewers should use their established private contact with the owner. Before public release, the maintainer must replace this paragraph with an actual tested private-reporting route (for example GitHub Private Vulnerability Reporting) and verify it from an external account.
 
 Include the affected version, macOS version, reproduction steps, expected impact, and a redacted proof. Remove all credentials and private media.
 

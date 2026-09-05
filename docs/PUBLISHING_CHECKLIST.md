@@ -1,9 +1,19 @@
 # GitHub publishing checklist
 
-Use `outputs/h3-max-continuous-test/` as the repository root. Do not publish the parent workspace.
+Use this repository root only. Do not publish its parent workspace.
 
 Local preflight last completed: **2026-09-03**, against the staged 1.6.1 initial
 release. Re-run the checks after any source or asset change.
+
+The checked boxes below record the original 1.6.1 publication audit, not blanket approval of later edits. For the local 1.6.2 review, see [current verification](VERIFICATION.md) and [review findings](REVIEW-1.6.2.md). Re-run CI and source/asset checks after committing the update. The repository remains private until the owner approves public visibility.
+
+### Private review update — 2026-09-05
+
+- [x] Local 1.6.2 checks: 85 Python tests, 16 frontend tests, JavaScript/Python/shell syntax, and Swift type checks.
+- [x] Re-check all candidate source files for private runtime artifacts, credential patterns, personal paths, oversized files, and broken local documentation links.
+- [x] Refresh the bilingual README, brand cover, channel overview, and real clean-session UI screenshot.
+- [x] Prepare a matching 1280 × 640 social card. The private repository's current Settings page does not expose a Social preview uploader; upload and verify it when that control is available. Do not change visibility for this step.
+- [ ] Before making the repository public, obtain the owner's review approval and complete the remaining public-release gates below.
 
 ## 1. Legal and brand
 
@@ -12,6 +22,7 @@ release. Re-run the checks after any source or asset change.
 - [x] Trademark rights reserved separately in `NOTICE` and `TRADEMARKS.md`.
 - [x] Historical generated videos, reference media, and local concept art remain outside the public repository.
 - [ ] Perform formal trademark clearance before commercial launch of “FrameCurrent.”
+- [ ] Before switching to public, provide a tested private security-reporting route and replace the private-review placeholder in `SECURITY.md`.
 
 ## 2. Clean source boundary
 
@@ -49,7 +60,7 @@ Review every match manually; a clean command is not proof that a repository cont
 - [ ] Protect `main` and require CI.
 - [ ] Keep Actions permissions read-only by default.
 - [ ] Upload `docs/brand/github-social-preview.png` in **Settings → General → Social preview** and verify the rendered card.
-- [ ] Keep the SVG cover in the README and add the repository description.
+- [x] Use the PNG cover in the README for consistent font rendering, retain the editable SVG source, and add the repository description.
 - [ ] Do not add a fal secret to CI.
 - [ ] Publish large, rights-cleared evidence separately as a Release asset, with SHA-256 and a media license.
 

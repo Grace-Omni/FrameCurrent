@@ -42,13 +42,14 @@ jobs:
 
       - name: Check Python and run offline tests
         run: |
-          /usr/bin/python3 -m py_compile app.py
+          /usr/bin/python3 -m py_compile app.py launcher.py
           /usr/bin/python3 -m unittest discover -s tests -v
 
       - name: Check JavaScript syntax
         run: |
           node --check web/app.js
           node --check web/player.js
+          node --test tests/frontend.test.cjs
 
       - name: Type-check Swift media tools
         run: |

@@ -1,48 +1,48 @@
-name: Bug report
-description: Report a reproducible local-app problem without private media or credentials.
+name: 问题反馈 / Bug report
+description: 反馈可复现的使用问题。Report a reproducible local-app problem.
 title: "[Bug] "
 labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: Never include a fal Key, reference image, generated private media, manifest, provider receipt, or local absolute path.
+      value: 请勿附上 API Key、私人提示词、媒体、任务清单或本机绝对路径。Never include credentials, private media, manifests or local paths. 安全漏洞请先阅读 SECURITY.md。
   - type: input
     id: version
     attributes:
-      label: FrameCurrent version
-      placeholder: "e.g. 1.6.1 or commit SHA"
+      label: 软件版本 / FrameCurrent version
+      placeholder: "例如 1.6.2，或 commit SHA"
     validations:
       required: true
   - type: input
     id: macos
     attributes:
-      label: macOS and Mac model
-      placeholder: "macOS version, Apple Silicon or Intel"
+      label: 系统与设备 / macOS and Mac model
+      placeholder: "macOS 版本，Apple Silicon 或 Intel"
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Reproduction steps
-      description: Use non-sensitive sample descriptions and state whether a paid request was actually submitted.
+      label: 如何复现 / Reproduction steps
+      description: 使用非敏感示例，并说明是否已提交收费生成。Include steps and whether generation was submitted.
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: 预期结果 / Expected behavior
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Actual behavior
+      label: 实际结果 / Actual behavior
     validations:
       required: true
   - type: checkboxes
     id: redaction
     attributes:
-      label: Privacy check
+      label: 信息检查 / Privacy check
       options:
-        - label: I removed credentials, session IDs, private prompts, media and absolute paths.
+        - label: 已移除密钥、任务标识、私人提示词、媒体和绝对路径。I removed credentials and private data.
           required: true

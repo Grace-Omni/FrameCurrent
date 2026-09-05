@@ -1,53 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
-  <title id="title">连续影像 FrameCurrent</title>
-  <desc id="desc">一个以电视频道方式持续生成视频的本地创作工具</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800" role="img" aria-labelledby="title desc">
+  <title id="title">连续影像 FrameCurrent — 让画面继续生长</title>
+  <desc id="desc">深色与荧光绿的品牌封面，三枚相连的画格代表逐幕延续。Mac上的AI视频创作电视。</desc>
   <defs>
-    <radialGradient id="bg" cx="0" cy="0" r="1" gradientTransform="translate(920 70) rotate(132) scale(860 680)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#24351f"/>
-      <stop offset=".47" stop-color="#0c110e"/>
-      <stop offset="1" stop-color="#050706"/>
-    </radialGradient>
-    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#1a211c"/>
-      <stop offset="1" stop-color="#0d110e"/>
-    </linearGradient>
-  </defs>
-  <rect width="1280" height="640" rx="38" fill="url(#bg)"/>
-  <circle cx="1118" cy="-42" r="278" fill="#c8ff62" opacity=".035"/>
-  <path d="M0 570C277 489 449 646 726 549c186-65 307-47 554 9" fill="none" stroke="#c8ff62" stroke-opacity=".08" stroke-width="2"/>
-
-  <g transform="translate(78 76)">
-    <rect width="64" height="64" rx="18" fill="#111713" stroke="#c8ff62" stroke-opacity=".22"/>
-    <path d="M49 17A23 23 0 1 0 48.6 47" fill="none" stroke="#c8ff62" stroke-width="8" stroke-linecap="round"/>
-    <path d="M29 22.5c0-2 2.1-3 3.7-2l15.6 9.7c1.5.9 1.5 3 0 4l-15.6 9.7c-1.6 1-3.7-.1-3.7-2V22.5Z" fill="#ff5d50"/>
-  </g>
-  <text x="164" y="108" fill="#f3f6f0" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-size="28" font-weight="750" letter-spacing="3">连续影像</text>
-  <text x="165" y="135" fill="#879189" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="5">FRAMECURRENT</text>
-
-  <text x="78" y="270" fill="#f3f6f0" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-size="68" font-weight="760" letter-spacing="-3">让画面继续生长。</text>
-  <text x="82" y="321" fill="#98a39b" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-size="21">选频道 · 设时长 · 连续生成 · 边播边缓存 · 导出完整视频</text>
-  <g transform="translate(80 388)">
-    <rect width="126" height="34" rx="17" fill="#c8ff62"/>
-    <text x="63" y="22" text-anchor="middle" fill="#10150e" font-family="Inter, sans-serif" font-size="11" font-weight="850" letter-spacing="1.5">LOCAL FIRST</text>
-    <rect x="138" width="148" height="34" rx="17" fill="#141a16" stroke="#ffffff" stroke-opacity=".12"/>
-    <text x="212" y="22" text-anchor="middle" fill="#c6cec8" font-family="Inter, sans-serif" font-size="11" font-weight="750" letter-spacing="1.2">BYO FAL KEY</text>
-    <rect x="298" width="152" height="34" rx="17" fill="#141a16" stroke="#ffffff" stroke-opacity=".12"/>
-    <text x="374" y="22" text-anchor="middle" fill="#c6cec8" font-family="Inter, sans-serif" font-size="11" font-weight="750" letter-spacing="1.2">MACOS NATIVE</text>
-  </g>
-
-  <g transform="translate(764 176)">
-    <rect width="424" height="286" rx="25" fill="url(#panel)" stroke="#ffffff" stroke-opacity=".13"/>
-    <rect x="22" y="22" width="380" height="214" rx="16" fill="#050706" stroke="#c8ff62" stroke-opacity=".25" stroke-width="7"/>
-    <path d="M22 190C122 112 205 253 402 84V236H22Z" fill="#c8ff62" opacity=".07"/>
-    <path d="M56 187c53-48 83-37 120-12 43 29 88 30 172-62" fill="none" stroke="#c8ff62" stroke-opacity=".5" stroke-width="3"/>
-    <circle cx="350" cy="65" r="6" fill="#ff5d50"/>
-    <text x="367" y="69" fill="#e7ece8" font-family="Inter, sans-serif" font-size="9" font-weight="800" letter-spacing="1.5">ON AIR</text>
-    <g transform="translate(22 250)">
-      <rect width="78" height="14" rx="7" fill="#c8ff62" opacity=".18"/>
-      <rect x="88" width="47" height="14" rx="7" fill="#ffffff" opacity=".08"/>
-      <rect x="145" width="112" height="14" rx="7" fill="#ffffff" opacity=".08"/>
-      <rect x="267" width="113" height="14" rx="7" fill="#ff5d50" opacity=".19"/>
+    <radialGradient id="glow"><stop stop-color="#293a21"/><stop offset="1" stop-color="#080a09"/></radialGradient>
+    <linearGradient id="frame" x2="1" y2="1"><stop stop-color="#1c271b"/><stop offset="1" stop-color="#0c110e"/></linearGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#d8e8cc" stroke-opacity=".035"/></pattern>
+    <clipPath id="scene"><rect width="324" height="204" rx="12"/></clipPath>
+    <g id="landscape" clip-path="url(#scene)">
+      <rect width="324" height="204" fill="url(#frame)"/>
+      <ellipse cx="247" cy="40" rx="42" ry="42" fill="#c8ff62" fill-opacity=".08"/>
+      <path d="M-30 181C49 85 96 206 166 130S260 30 362 55V220H-30Z" fill="#c8ff62" fill-opacity=".05"/>
+      <path d="M-30 181C49 85 96 206 166 130S260 30 362 55" fill="none" stroke="#c8ff62" stroke-opacity=".55" stroke-width="2"/>
+      <path d="M-30 198C49 102 96 223 166 147S260 47 362 72M-30 215C49 119 96 240 166 164S260 64 362 89M-30 232C49 136 96 257 166 181S260 81 362 106" fill="none" stroke="#c8ff62" stroke-opacity=".14"/>
+      <circle cx="193" cy="104" r="5" fill="#ff5d50"/>
+      <path d="M193 116V177" stroke="#ff5d50" stroke-opacity=".25"/>
     </g>
+  </defs>
+  <rect width="1600" height="800" rx="28" fill="#080a09"/>
+  <ellipse cx="1210" cy="380" rx="580" ry="400" fill="url(#glow)"/>
+  <rect x="1" y="1" width="1598" height="798" rx="27" fill="url(#grid)" stroke="#283026"/>
+  <g transform="translate(84 68)">
+    <path d="M49.4 16.8A23.5 23.5 0 1 0 49 47.6" fill="none" stroke="#c8ff62" stroke-width="8.5" stroke-linecap="round"/>
+    <path d="M29 22.1c0-2 2.2-3.1 3.8-2L48.7 30c1.5.9 1.5 3.1 0 4L32.8 43.9c-1.6 1-3.8-.1-3.8-2V22.1Z" fill="#ff5d50"/>
   </g>
-  <text x="80" y="574" fill="#626c65" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-size="13">Experimental local creator · Continuous generation is not a guarantee of semantic continuity</text>
+  <text x="171" y="109" fill="#c8ff62" font-family="Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="4">CONTINUOUS GENERATIVE CINEMA</text>
+  <text x="1516" y="105" text-anchor="end" fill="#919c94" font-family="Arial, sans-serif" font-size="16" letter-spacing="3">MADE FOR YOUR MAC</text>
+  <path d="M84 160H1516" stroke="#c8ff62" stroke-opacity=".16"/>
+  <g font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">
+    <text x="78" y="318" fill="#f3f6f0" font-size="114" font-weight="700" letter-spacing="-6">FrameCurrent</text>
+    <text x="84" y="390" fill="#c8ff62" font-size="48" font-weight="600" letter-spacing="7">连续影像</text>
+    <text x="84" y="494" fill="#f3f6f0" font-size="44" font-weight="600">让画面继续生长。</text>
+    <text x="86" y="547" fill="#a5b09f" font-size="24">选一个频道，开启一段持续延展的视觉旅程。</text>
+  </g>
+  <g transform="translate(989 207) rotate(-8 175 120)">
+    <rect x="-9" y="-9" width="342" height="244" rx="19" fill="#0b100c" stroke="#4e6540"/>
+    <use href="#landscape"/>
+    <text x="12" y="224" fill="#819475" font-family="monospace" font-size="11" letter-spacing="2">FRAME 001</text>
+  </g>
+  <g transform="translate(1070 303) rotate(1 175 120)">
+    <rect x="-9" y="-9" width="342" height="244" rx="19" fill="#0b100c" stroke="#759b53"/>
+    <use href="#landscape"/>
+    <text x="12" y="224" fill="#a8c194" font-family="monospace" font-size="11" letter-spacing="2">FRAME 002</text>
+  </g>
+  <g transform="translate(1150 404) rotate(10 175 120)">
+    <rect x="-9" y="-9" width="342" height="244" rx="19" fill="#10170f" stroke="#c8ff62" stroke-width="2"/>
+    <use href="#landscape"/>
+    <text x="12" y="224" fill="#c8ff62" font-family="monospace" font-size="11" letter-spacing="2">FRAME 003</text>
+    <circle cx="300" cy="219" r="4" fill="#ff5d50"/>
+  </g>
+  <path d="M84 678H1516" stroke="#c8ff62" stroke-opacity=".16"/>
+  <g font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" font-size="17">
+    <text x="84" y="735" fill="#c8ff62" font-weight="700">5 个预设频道 + 你的想象</text>
+    <text x="637" y="735" fill="#adb8a7">横屏 / 竖屏</text>
+    <text x="915" y="735" fill="#adb8a7">逐幕生成 · MP4 导出</text>
+    <text x="1516" y="735" text-anchor="end" fill="#819475" letter-spacing="2">OPEN SOURCE</text>
+  </g>
 </svg>

@@ -1,34 +1,34 @@
-name: Feature request
-description: Propose a user outcome for the local continuous-video workflow.
+name: 功能建议 / Feature request
+description: 告诉我们你希望改善的创作体验。Suggest an improvement to the creation workflow.
 title: "[Feature] "
 labels: [enhancement]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: User problem
-      description: What is difficult today, and for whom?
+      label: 遇到了什么问题 / User problem
+      description: 哪一步不顺手，影响了什么使用场景？What is difficult today, and for whom?
     validations:
       required: true
   - type: textarea
     id: outcome
     attributes:
-      label: Desired outcome
-      description: Describe the result, not only a specific implementation.
+      label: 期待的体验 / Desired outcome
+      description: 描述你希望得到的结果。Describe the experience you would like.
     validations:
       required: true
   - type: dropdown
     id: risk
     attributes:
-      label: Does this affect paid generation, Key handling or public deployment?
+      label: 是否涉及收费生成、密钥或公网使用 / Billing, Keys or public deployment?
       options:
-        - No
-        - Yes
-        - Unsure
+        - 不涉及 / No
+        - 涉及 / Yes
+        - 不确定 / Unsure
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance evidence
-      description: What observable result would prove this is complete?
+      label: 如何判断改好了 / Acceptance evidence
+      description: 哪个可观察的结果能说明问题解决了？What would prove the improvement works?

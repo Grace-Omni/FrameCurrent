@@ -42,7 +42,11 @@ SCRIPT_ROOT = APP_ROOT / "scripts"
 RUNTIME_ROOT = APP_ROOT / "runtime"
 SESSION_ROOT = RUNTIME_ROOT / "sessions"
 BIN_ROOT = RUNTIME_ROOT / "bin"
-APP_VERSION = "1.6.1"
+APP_VERSION = "1.6.2"
+APP_ID = "framecurrent"
+# Identifies this checkout without exposing its absolute path to the browser.
+INSTANCE_ID = hashlib.sha256(str(APP_ROOT).encode("utf-8")).hexdigest()[:24]
+SHUTTING_DOWN = threading.Event()
 
 MIN_DURATION_SECONDS = 10
 MAX_DURATION_SECONDS = 30 * 60
@@ -852,7 +856,7 @@ def fal_generate(
     stop_event: threading.Event,
     progress_callback,
 ) -> Tuple[Dict[str, Any], str, float, Dict[str, Any]]:
-    if stop_event.is_set():
+    if stop_event.is_set() or SHUTTING_DOWN.is_set():
         raise RuntimeError("任务已由用户停止")
     started = time.monotonic()
     submit_url = f"https://queue.fal.run/{endpoint}"
@@ -950,6 +954,36 @@ def compile_swift_tool(name: str) -> Path:
         if completed.returncode != 0:
             raise RuntimeError(f"Swift媒体工具编译失败: {completed.stderr[-3000:]}")
     return binary
+
+
+def prepare_media_tools() -> None:
+    """Fail locally before the first billable request, including on direct launches."""
+    if sys.platform != "darwin":
+        raise RuntimeError("本地环境未就绪：当前版本仅支持 macOS")
+    for tool in ("/usr/bin/sips", "/usr/bin/avmediainfo", "/usr/bin/swiftc"):
+        if not os.access(tool, os.X_OK):
+            raise RuntimeError("本地环境未就绪：请运行 doctor.command 检查 Apple 媒体工具")
+    try:
+        SESSION_ROOT.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryFile(dir=SESSION_ROOT) as probe:
+            probe.write(b"FrameCurrent write check")
+        for command, marker in ((["/usr/bin/avmediainfo", "--help"], "avmediainfo"),
+                                (["/usr/bin/sips", "--version"], "sips")):
+            result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+            if marker not in (result.stdout + result.stderr).lower():
+                raise RuntimeError("Apple 媒体工具无法正常运行")
+        for name in ("extract_frame", "image_similarity", "merge_clips"):
+            binary = compile_swift_tool(name)
+            if not os.access(binary, os.X_OK):
+                raise RuntimeError("编译后的媒体工具无法执行")
+            result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=15)
+            if result.returncode != 1 or f"usage: {name}" not in result.stderr:
+                raise RuntimeError("编译后的媒体工具启动检查失败")
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+        raise RuntimeError(
+            "本地环境未就绪：媒体工具编译或作品目录写入失败；尚未提交付费生成。"
+            "请运行 doctor.command，检查 Apple 命令行工具和文件夹权限。"
+        ) from error
 
 
 def extract_frame(video_path: Path, output_path: Path, position: str) -> Path:
@@ -1143,13 +1177,19 @@ def public_error_message(error: str) -> str:
     if not error:
         return ""
     lowered = error.lower()
+    if "本地环境" in error:
+        return "本地环境未就绪：请运行 doctor.command 检查媒体工具和目录权限；本次未提交付费生成"
+    if "512mb" in lowered or "下载的视频文件过小" in error:
+        return "视频下载未通过文件检查；已提交的生成可能计费，请先检查服务商结果，不要反复开播"
+    if "swift" in lowered or any(word in error for word in ("合并", "媒体", "视频文件不存在", "片段文件不完整")):
+        return "本地视频处理或校验失败；可先下载已保存片段，再运行 doctor.command 检查环境"
     if "exhausted balance" in lowered or "insufficient balance" in lowered or "余额" in error:
         return "fal 账户余额不足，任务没有被受理；请充值后重试"
     if "budget" in lowered or "预算" in lowered:
         return "本地预计费用上限不足，软件已停止提交新的画面"
     if "401" in lowered or "403" in lowered or "api key" in lowered or "密钥" in lowered:
         return "fal 密钥无效、权限不足或账户不可用"
-    if "safety" in lowered or "安全" in lowered:
+    if "safety" in lowered or "内容安全" in lowered:
         return "本幕没有通过内容安全检查，请调整画面描述"
     if "网络" in error or "timeout" in lowered or "timed out" in lowered:
         return "生成服务连接暂时不稳定，请稍后重试"
@@ -1532,6 +1572,10 @@ def run_session(session: SessionState) -> None:
     try:
         session.directory.mkdir(parents=True, exist_ok=True)
         with session.lock:
+            session.message = "正在检查本地媒体工具；尚未提交付费生成"
+        session.persist()
+        prepare_media_tools()
+        with session.lock:
             session.status = "generating"
             session.message = "AI 正在写下第一幕"
         session.persist()
@@ -1544,7 +1588,7 @@ def run_session(session: SessionState) -> None:
                     termination_reason = "target_reached"
                     break
 
-            if session.stop_event.is_set():
+            if session.stop_event.is_set() or SHUTTING_DOWN.is_set():
                 termination_reason = "user_stopped"
                 break
 
@@ -1789,7 +1833,8 @@ class AppHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self._security_headers()
         self.end_headers()
-        self.wfile.write(raw)
+        if self.command != "HEAD":
+            self.wfile.write(raw)
 
     def _local_authority(self) -> Optional[Tuple[str, int]]:
         values = self.headers.get_all("Host") or []
@@ -1862,6 +1907,10 @@ class AppHandler(SimpleHTTPRequestHandler):
             raise ValueError("请求体必须是JSON对象")
         return payload
 
+    def do_HEAD(self) -> None:  # noqa: N802
+        # The inherited handler would inspect files outside the public web root.
+        self.do_GET()
+
     def do_GET(self) -> None:  # noqa: N802
         if self._local_authority() is None:
             self._json({"error": "仅接受当前本机服务地址"}, HTTPStatus.MISDIRECTED_REQUEST)
@@ -1870,9 +1919,16 @@ class AppHandler(SimpleHTTPRequestHandler):
         path = parsed.path
         if path == "/api/health":
             swift_available = Path("/usr/bin/swiftc").exists()
+            with SESSIONS_LOCK:
+                active = next((session for session in SESSIONS.values()
+                               if session.status in {"preparing", "generating", "finalizing"}), None)
+                active_summary = {"session_id": active.session_id, "preset": active.config["preset"]} if active else None
             self._json(
                 {
-                    "ok": True,
+                    "ok": not SHUTTING_DOWN.is_set(),
+                    "app_id": APP_ID,
+                    "instance_id": INSTANCE_ID,
+                    "active_session": active_summary,
                     "version": APP_VERSION,
                     "duration_modes": sorted(DURATION_MODES),
                     "duration_limits": {
@@ -1967,6 +2023,14 @@ class AppHandler(SimpleHTTPRequestHandler):
                 api_key = ""
                 self._json(result)
                 return
+            if path == "/api/session/recover":
+                payload = self._read_json()
+                digest = client_request_hash(normalize_client_request_id(payload.get("client_request_id")))
+                with SESSIONS_LOCK:
+                    known = SESSIONS.get(CLIENT_REQUEST_SESSIONS.get(digest, ""))
+                # Strictly a lookup. Missing IDs can never create a session.
+                self._json({"session_id": known.session_id} if known else {"error": "尚未找到对应任务"}, 200 if known else 404)
+                return
             if path == "/api/session/start":
                 payload = self._read_json()
                 normalized_request_id = normalize_client_request_id(
@@ -2004,6 +2068,10 @@ class AppHandler(SimpleHTTPRequestHandler):
                 )
                 replay_session: Optional[SessionState] = None
                 with SESSIONS_LOCK:
+                    if SHUTTING_DOWN.is_set():
+                        session.api_key = ""
+                        self._json({"error": "本机服务正在关闭，未启动新的生成任务"}, 503)
+                        return
                     # A concurrent request may have registered the same UUID
                     # while this request was validating its payload. Re-check
                     # and atomically choose exactly one owning session.
@@ -2135,6 +2203,8 @@ class AppHandler(SimpleHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache" if mime.startswith("video/") else "public, max-age=60")
             self._security_headers()
             self.end_headers()
+            if self.command == "HEAD":
+                return
             with path.open("rb") as source:
                 source.seek(start)
                 remaining = length
@@ -2167,6 +2237,8 @@ class AppHandler(SimpleHTTPRequestHandler):
             )
         self._security_headers()
         self.end_headers()
+        if self.command == "HEAD":
+            return
         with path.open("rb") as source:
             try:
                 shutil.copyfileobj(source, self.wfile)
@@ -2280,17 +2352,54 @@ def create_server(host: str, port: int) -> ThreadingHTTPServer:
     return ThreadingHTTPServer((host, port), AppHandler)
 
 
+def shutdown_running_sessions(timeout: float = 8.0) -> None:
+    """Stop new clips immediately; cancellation and finalization are best effort."""
+    with SESSIONS_LOCK:
+        active = [session for session in SESSIONS.values()
+                  if session.status in {"preparing", "generating", "finalizing"}]
+    def stop_safely(session: SessionState) -> None:
+        try:
+            # This function sets the event and claims cancellation credentials
+            # atomically. Setting the event outside it would race worker cleanup.
+            stop_generation_session(session)
+        except Exception:
+            print("停止请求未能确认；已提交的一幕仍可能计费。", flush=True)
+    workers = [threading.Thread(target=stop_safely, args=(session,), daemon=True) for session in active]
+    for worker in workers:
+        worker.start()
+    deadline = time.monotonic() + timeout
+    for worker in workers:
+        worker.join(timeout=max(0, deadline - time.monotonic()))
+    while active and time.monotonic() < deadline:
+        if all(session.status not in {"preparing", "generating", "finalizing"} for session in active):
+            return
+        time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+    if active:
+        print("服务即将关闭；请勿假定远端任务已取消。重启不会自动继续付费生成。", flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="连续影像 FrameCurrent：H3 Max 固定或不限时长视频生成器")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=4173)
     parser.add_argument("--no-open", action="store_true")
     args = parser.parse_args()
+    SHUTTING_DOWN.clear()
 
     for directory in (RUNTIME_ROOT, SESSION_ROOT, BIN_ROOT):
         directory.mkdir(parents=True, exist_ok=True)
-    restore_manifests()
-    server = create_server(args.host, args.port)
+    try:
+        server = create_server(args.host, args.port)
+    except OSError as error:
+        if error.errno == 48 or error.errno == 98:
+            parser.exit(1, f"端口 {args.port} 已被占用。请双击 run.command 重新连接现有服务；不要重复启动。\n")
+        parser.exit(1, "本地服务无法启动，请运行 doctor.command 检查环境与文件夹权限。\n")
+    try:
+        print("正在检查本机历史作品；作品较多时请稍候，不会自动恢复付费生成。", flush=True)
+        restore_manifests()
+    except Exception:
+        server.server_close()
+        raise
     url = f"http://{args.host}:{server.server_address[1]}"
     print(f"连续影像 · FrameCurrent 已启动：{url}", flush=True)
     print("API Key 只保存在当前进程内存，不会写入磁盘。", flush=True)
@@ -2302,14 +2411,24 @@ def main() -> None:
 
         threading.Thread(target=open_browser, daemon=True).start()
 
+    stopping = threading.Event()
     def stop_server(_signum=None, _frame=None) -> None:
-        threading.Thread(target=server.shutdown, daemon=True).start()
+        if stopping.is_set():
+            return
+        stopping.set()
+        with SESSIONS_LOCK:
+            SHUTTING_DOWN.set()
+        def finish_shutdown() -> None:
+            # Stop accepting new HTTP requests before asking active workers to finish.
+            server.shutdown()
+        threading.Thread(target=finish_shutdown, daemon=True).start()
 
     signal.signal(signal.SIGINT, stop_server)
     signal.signal(signal.SIGTERM, stop_server)
     try:
         server.serve_forever(poll_interval=0.3)
     finally:
+        shutdown_running_sessions()
         server.server_close()
 
 

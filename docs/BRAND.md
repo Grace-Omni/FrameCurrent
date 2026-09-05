@@ -20,7 +20,14 @@ Production assets:
 
 - `web/assets/logo-mark.svg` — compact mark and favicon.
 - `web/assets/logo-lockup.svg` — Chinese/English lockup.
-- `docs/brand/github-cover.svg` — repository cover.
+- `docs/brand/github-cover.svg` — editable repository cover; refreshed 2026-09-05 around the three-frame continuity motif.
+- `docs/brand/github-cover.png` — 1600 × 800 README export, keeping the intended typography across operating systems.
+- `docs/brand/github-social-preview.png` — 1280 × 640 repository sharing card.
+- `docs/brand/app-overview.png` — actual fresh-session interface capture; use a caption that distinguishes the UI from generated-video evidence.
+
+## Repository presentation
+
+Lead with the product cover and a short description, then show the channels and an optional full interface preview. Keep quick-start instructions easy to find; move engineering detail into linked documentation or expandable sections. Use the existing channel concept artwork with its explanatory caption, never as a stand-in for an accepted video sample. The README's CI badge must link to real workflow results.
 
 Do not use `docs/brand/concepts/framecurrent-mark-v1.png` as the production logo; it is an image-generation exploration retained for provenance.
 

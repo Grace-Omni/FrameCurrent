@@ -397,3 +397,83 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .footer-version b { font-size: 8px; letter-spacing: .08em; }
   .footer-version small { padding-left: 7px; letter-spacing: .08em; }
 }
+
+/* First-run clarity: keep the TV surface, make decisions and recovery readable. */
+.help-link, .connection-notice button, .active-notice button {
+  border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.04);
+  color: var(--text); padding: 10px 14px; min-height: 44px; cursor: pointer; font-size: 14px;
+}
+.connection-notice, .active-notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px; margin-top: 16px; border-radius: 14px;
+  border: 1px solid rgba(249,180,94,.35); background: #221d13; font-size: 14px;
+}
+.connection-notice[hidden], .active-notice[hidden], .saved-clips[hidden] { display: none; }
+.connection-notice p, .active-notice p { margin: 0; line-height: 1.6; }
+.connection-notice button, .active-notice button { flex-shrink: 0; }
+.active-notice { background: #172015; border-color: rgba(200,255,98,.3); }
+.start-help { color: var(--lime); font-size: 14px; line-height: 1.65; margin: 12px 0 0; }
+.key-help { display: inline-block; margin-top: 10px; padding-block: 6px; font-size: 14px; color: var(--amber); text-underline-offset: 4px; }
+.usage-guide { padding: 22px; margin: -42px 0 36px; }
+.usage-guide > summary { cursor: pointer; font-size: 16px; font-weight: 700; min-height: 24px; }
+.guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 24px; }
+.guide-grid h3 { margin: 0 0 10px; font-size: 16px; color: var(--lime); }
+.guide-grid p { margin: 0; color: #b9c2bb; line-height: 1.8; font-size: 16px; }
+.guide-footnote { padding-top: 20px; margin: 20px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; line-height: 1.75; }
+.saved-clips { border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 18px 0; }
+.saved-clips summary { cursor: pointer; color: var(--lime); font-size: 14px; }
+.saved-clips p { font-size: 14px; line-height: 1.6; color: var(--muted); }
+#savedClipLinks { display: flex; flex-wrap: wrap; gap: 8px; max-height: 260px; overflow: auto; }
+#savedClipLinks a { color: var(--text); font-size: 14px; padding: 12px; background: rgba(255,255,255,.045); border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }
+.section-heading p, .channel-heading p, .channel-description, .setting-label b,
+.setting-label span, .time-inputs label span, .quick-times > span, .quick-times button,
+.setting-help, .ratio-builder legend, .ratio-option b, .ratio-option small,
+.field > span, .field small, .launch-options .field small, .key-status, .verify-button,
+.duration-mode-switch label, .unlimited-note p, .form-note, .stage-placeholder p,
+.paid-dialog-cost span, .paid-dialog-cost p, .paid-dialog-warning, .clip-timing-panel > p,
+.monitor-state, .progress-meta, .telemetry-grid dt, .next-scene p, .next-scene span,
+.system-pill, .program-settings-heading small, .brief-summary p, .upload-field small,
+.advanced-settings summary, .channel-copy small { font-size: 14px; line-height: 1.6; }
+.field input, .field select, .field textarea, .channel-copy b { font-size: 16px; }
+.channel-description .preset-behavior { white-space: normal; color: var(--muted) !important; font-size: 14px !important; max-width: 370px; }
+.channel-description { align-items: flex-start; margin-top: 8px; }
+.field, .key-row, .field input, .field select { min-width: 0; }
+.field small, .key-status, .paid-dialog-cost p, .start-help { overflow-wrap: anywhere; }
+.key-row { grid-template-columns: minmax(0, 1fr) auto; }
+.verify-button { min-height: 46px; min-width: 88px; padding-inline: 10px; }
+.quick-times button { min-height: 40px; }
+.ratio-option:focus-within, .duration-mode-switch label:focus-within, .upload-field:focus-within { outline: 2px solid var(--lime); outline-offset: 3px; }
+.upload-field { position: relative; }
+.upload-field input { display: block; position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.section-heading.compact h2 { white-space: normal; overflow-wrap: anywhere; }
+.section-heading.compact { flex-wrap: wrap; }
+.telemetry-grid dd { overflow-wrap: anywhere; }
+.paid-dialog { width: min(94vw, 530px); }
+.paid-dialog-actions { grid-template-columns: 1fr; }
+.paid-dialog-actions .primary-button { justify-content: center; }
+.form-note { color: var(--muted); text-align: left; }
+.monitor-error, .toast, .clip-timing-head, .clip-timing-chip b { font-size: 14px; }
+.clip-timing-chip, .clip-timing-chip small, .clip-timing-chip em, .clip-timing-empty { font-size: 12px; }
+.clip-timing-head { flex-wrap: wrap; }
+.clip-timing-panel > p { color: var(--muted); }
+.paid-dialog-cost p, .paid-dialog-warning, .key-status { color: #b9b2a5; }
+@media (max-width: 700px) {
+  .station-intro .hero-copy { font-size: 16px; }
+  .station-intro h1 { font-size: clamp(26px, 6vw, 34px); }
+  .guide-grid { grid-template-columns: 1fr; gap: 24px; }
+  .connection-notice, .active-notice { align-items: stretch; flex-direction: column; }
+  .setting-label { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .ratio-options { grid-template-columns: 1fr; }
+  .ratio-option { min-height: 76px; }
+  .field-group { grid-template-columns: 1fr; }
+  .channel-description { gap: 12px; }
+  .topbar { height: auto; min-height: 92px; gap: 16px; padding-block: 16px; flex-wrap: wrap; }
+  .topbar-status { flex-wrap: wrap; gap: 8px; }
+  .chain-illustration, .stage-placeholder::after { display: none; }
+  .stage-placeholder { padding: 14px; }
+  .stage-placeholder h3 { margin-top: 16px; }
+  .live-badge { top: 6px; left: 6px; padding: 4px 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

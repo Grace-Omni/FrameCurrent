@@ -13,10 +13,11 @@ Thanks for helping improve 连续影像 / FrameCurrent. This is an experimental,
 ## Verification
 
 ```bash
-/usr/bin/python3 -m py_compile app.py
+/usr/bin/python3 -m py_compile app.py launcher.py
 /usr/bin/python3 -m unittest discover -s tests -v
 node --check web/app.js
 node --check web/player.js
+node --test tests/frontend.test.cjs
 ```
 
 Type-check each Swift tool separately:

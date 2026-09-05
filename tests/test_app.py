@@ -892,6 +892,62 @@ class PublicStateTests(unittest.TestCase):
         config, key = validated_config(**overrides)
         return app.SessionState("unit", config, api_key=key)
 
+    def test_media_preflight_failure_never_reaches_billable_generation(self):
+        session = self.make_session()
+        with mock.patch.object(app, "prepare_media_tools", side_effect=RuntimeError("本地环境未就绪")), \
+             mock.patch.object(app, "fal_generate") as generate, \
+             mock.patch.object(app.traceback, "print_exc"):
+            app.run_session(session)
+        generate.assert_not_called()
+        self.assertEqual(session.status, "failed")
+        self.assertEqual(session.submitted_seconds, 0)
+        self.assertEqual(session.spent_estimate_usd, 0)
+        self.assertEqual(session.api_key, "")
+        self.assertIn("doctor.command", session.public()["error"])
+
+    def test_shutdown_uses_atomic_stop_and_cancellation_claim(self):
+        session = self.make_session()
+        app.SESSIONS[session.session_id] = session
+        session.active_request_id = "offline-shutdown"
+        session.active_cancel_url = queue_submission()["cancel_url"]
+        original_set = session.stop_event.set
+        def set_under_lock():
+            self.assertTrue(session.lock._is_owned())
+            original_set()
+        def cancelled(_url, _key):
+            self.assertTrue(session.stop_event.is_set())
+            session.status = "stopped"
+            return "CANCELLATION_REQUESTED"
+        with mock.patch.object(session.stop_event, "set", side_effect=set_under_lock), \
+             mock.patch.object(app, "best_effort_cancel_fal_request", side_effect=cancelled) as cancel:
+            app.shutdown_running_sessions(timeout=1)
+        cancel.assert_called_once_with(session.active_cancel_url, session.api_key)
+
+    def test_shutdown_does_not_wait_forever_for_cancellation(self):
+        session = self.make_session()
+        app.SESSIONS[session.session_id] = session
+        release = threading.Event()
+        import time
+        started = time.monotonic()
+        def blocked_stop(current):
+            with current.lock:
+                current.stop_event.set()
+            release.wait(2)
+        try:
+            with mock.patch.object(app, "stop_generation_session", side_effect=blocked_stop):
+                app.shutdown_running_sessions(timeout=0.02)
+            self.assertLess(time.monotonic() - started, 0.5)
+            self.assertTrue(session.stop_event.is_set())
+        finally:
+            release.set()
+
+    def test_error_categories_keep_local_file_limits_out_of_content_safety(self):
+        self.assertIn("下载", app.public_error_message("视频文件超过 512MB 安全上限"))
+        self.assertNotIn("内容安全", app.public_error_message("视频文件超过 512MB 安全上限"))
+        self.assertIn("doctor.command", app.public_error_message("Swift媒体工具编译失败"))
+        self.assertNotIn("未提交付费", app.public_error_message("Swift媒体工具编译失败"))
+        self.assertIn("内容安全", app.public_error_message("safety checker rejected"))
+
     def run_with_offline_media(self, session, generate_side_effect):
         def fake_download(_url, destination):
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -931,7 +987,7 @@ class PublicStateTests(unittest.TestCase):
             app, "compare_images", return_value=1.0
         ), mock.patch.object(
             app, "merge_session_clips", side_effect=fake_merge
-        ) as merge:
+        ) as merge, mock.patch.object(app, "prepare_media_tools"):
             app.run_session(session)
         return generate, merge
 
@@ -1391,7 +1447,7 @@ class PublicStateTests(unittest.TestCase):
         )
         with mock.patch.object(
             app, "fal_generate", side_effect=rejected
-        ), mock.patch.object(app.traceback, "print_exc"):
+        ), mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"):
             app.run_session(session)
         public = session.public()
         self.assertEqual(public["status"], "failed")
@@ -1410,7 +1466,7 @@ class PublicStateTests(unittest.TestCase):
         rejected_after_capture = RuntimeError("offline stop after argument capture")
         with mock.patch.object(
             app, "fal_generate", side_effect=rejected_after_capture
-        ) as generate, mock.patch.object(app.traceback, "print_exc"):
+        ) as generate, mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"):
             app.run_session(session)
 
         endpoint, arguments = generate.call_args.args[:2]
@@ -1799,6 +1855,10 @@ class HttpBoundaryTests(unittest.TestCase):
         status, health = self.request_json("/api/health")
         self.assertEqual(status, 200)
         self.assertTrue(health["ok"])
+        self.assertEqual(health["app_id"], "framecurrent")
+        self.assertEqual(health["instance_id"], app.INSTANCE_ID)
+        self.assertIsNone(health["active_session"])
+        self.assertNotIn(str(ROOT), json.dumps(health))
         self.assertEqual(
             health["duration_limits"],
             {"min_seconds": 10, "max_seconds": 1800, "step_seconds": 1},
@@ -1810,6 +1870,51 @@ class HttpBoundaryTests(unittest.TestCase):
             {preset["id"] for preset in health["presets"]},
             set(app.PRESETS),
         )
+
+    def test_head_uses_the_same_public_routes_and_security_headers_as_get(self):
+        for path, expected in (("/", 200), ("/api/health", 200), ("/app.py", 404), ("/launcher.py", 404)):
+            connection = http.client.HTTPConnection("127.0.0.1", self.server.server_address[1])
+            try:
+                connection.request("HEAD", path)
+                response = connection.getresponse()
+                self.assertEqual(response.status, expected)
+                self.assertEqual(response.read(), b"")
+                if expected == 200:
+                    self.assertEqual(response.getheader("X-Content-Type-Options"), "nosniff")
+                if path == "/":
+                    self.assertEqual(int(response.getheader("Content-Length")), (ROOT / "web/index.html").stat().st_size)
+            finally:
+                connection.close()
+
+    def test_recovery_lookup_never_creates_a_task_and_matches_the_exact_id(self):
+        request_id = str(uuid.uuid4())
+        with mock.patch.object(app, "run_session") as run:
+            status, _ = self.request_json("/api/session/recover", {"client_request_id": request_id})
+            self.assertEqual(status, 404)
+            self.assertEqual(app.SESSIONS, {})
+            config, key = validated_config()
+            session = app.SessionState("offline-recover", config, api_key=key)
+            app.SESSIONS[session.session_id] = session
+            app.CLIENT_REQUEST_SESSIONS[app.client_request_hash(request_id)] = session.session_id
+            status, body = self.request_json("/api/session/recover", {"client_request_id": request_id})
+            self.assertEqual((status, body), (200, {"session_id": session.session_id}))
+            status, health = self.request_json("/api/health")
+            self.assertEqual(health["active_session"], {"session_id": session.session_id, "preset": config["preset"]})
+        run.assert_not_called()
+
+    def test_shutdown_rejects_unregistered_starts_and_provider_submissions(self):
+        app.SHUTTING_DOWN.set()
+        try:
+            with mock.patch.object(app, "run_session") as run, mock.patch.object(app, "request_json") as provider:
+                status, _ = self.request_json("/api/session/start", valid_payload())
+                self.assertEqual(status, 503)
+                self.assertEqual(app.SESSIONS, {})
+                with self.assertRaisesRegex(RuntimeError, "停止"):
+                    app.fal_generate("unused", {}, FAKE_FAL_KEY, threading.Event(), lambda *_: None)
+            run.assert_not_called()
+            provider.assert_not_called()
+        finally:
+            app.SHUTTING_DOWN.clear()
 
     def test_http_rejects_untrusted_authority_origin_and_non_json_posts(self):
         port = self.server.server_address[1]

@@ -2,6 +2,38 @@
 
 All notable changes are documented here. Dates use Asia/Shanghai local time.
 
+## Repository presentation — 2026-09-05
+
+- Refresh the bilingual product introduction, brand cover and 1280 × 640 social-preview card.
+- Present five preset channels and the custom channel together, with concept artwork labeled separately from model output.
+- Add an actual fresh-session interface screenshot, a concise download/start path, expandable FAQs and a documentation index.
+- Localize issue templates for Chinese and English readers, update the asset register, and prepare the 1.6.2 changes for owner review in the existing private repository.
+
+## 1.6.2 — 2026-09-04
+
+### First-run experience
+
+- Start with a 30-second sample; distinguish output length from wait time and local connectivity from provider access.
+- Add a compact in-app guide, Key dashboard link, actionable disabled-start explanations and reconnect guidance.
+- Keep preset channels free of program settings. Preserve custom controls, horizontal/vertical output and unlimited mode.
+- Show the running channel across channel changes, recover it after refresh, and reconcile lost-start request IDs through an exact, read-only lookup.
+- Offer individual saved-clip downloads after partial progress or interruption; retain completed-program telemetry when editing the next duration.
+- Increase decision-critical text sizes, expose keyboard focus on radio/file controls, and respect reduced-motion preferences.
+
+### Reliability and safety
+
+- Validate and compile media tools before the first billable request; environment checks no longer pass solely because a compiler stub exists.
+- Reopen only a matching local checkout/version; explain port conflicts without killing processes.
+- Bound frontend request waits without automatically retrying paid POSTs. Reject an in-flight Key verification if the input changed.
+- On process shutdown, reject new starts and attempt cancellation with atomic credential capture and a bounded wait. Remote cancellation is not guaranteed.
+- Route HEAD through the same protected routes as GET; distinguish file/media errors from model safety rejections.
+
+### Packaging and verification
+
+- Rewrite onboarding for new users, add an English overview and Chinese troubleshooting guide, and replace the hard-coded passing badge with a CI link.
+- Keep Apache-2.0 and reserved trademarks unchanged. Private security reporting remains a public-release gate.
+- 85 Python and 16 frontend-controller offline tests pass. Clean-source macOS media compilation and local HTTP startup verified. No paid generation or browser visual acceptance was performed for this update.
+
 ## 1.6.1 — 2026-09-03
 
 ### Security

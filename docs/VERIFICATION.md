@@ -1,15 +1,35 @@
 # Current verification
 
-Updated: 2026-09-03
-Product: 连续影像 / FrameCurrent 1.6.1
+Updated: 2026-09-05
+Product: 连续影像 / FrameCurrent 1.6.2
 
 ## Automated baseline
 
 ```bash
 /usr/bin/python3 -m unittest discover -s tests -v
+node --test tests/frontend.test.cjs
 ```
 
-Expected result: **71 / 71 PASS**. These tests are offline and replace provider calls with local test doubles; they do not generate or charge for video.
+Observed locally: **85 / 85 Python tests PASS; 16 / 16 frontend-controller tests PASS**. These tests are offline and replace provider calls with local test doubles; they do not generate or charge for video. The frontend suite executes the real controller against a small DOM substitute, not a browser; it does not validate pixel layout, real media playback or browser compatibility.
+
+New coverage includes environment failure before any billable call, safe duplicate launch, bounded shutdown with atomic cancellation, shutdown/start exclusion, HEAD route parity, exact read-only request recovery, first-run defaults, active-channel recovery, lost-response reconciliation, saved-clip links, Key-edit races, and cancelling paid confirmation.
+
+## Local launch verification
+
+- A separate source-only copy without user media, credentials or compiled binaries passed `doctor.command`, including first-time compilation and execution probes for all three Swift media helpers.
+- That clean copy started on an ephemeral loopback port and returned HTTP 200; its test server was then stopped.
+- The user's normal `run.command` started version 1.6.2 on `127.0.0.1:4173`; the homepage and health endpoint returned HTTP 200 with no active generation.
+- Python compilation, both JavaScript syntax checks, shell syntax checks and `git diff --check` passed.
+- The GitHub verification for pushed source is recorded in [Offline verification runs](https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml); check the run for the specific commit under review.
+
+## Repository presentation verification · 2026-09-05
+
+- The actual local homepage and player region were visually inspected in a fresh browser session without credentials, generation tasks or user media. `docs/brand/app-overview.png` records that interface, not generated-video evidence.
+- The refreshed cover was rendered to 1600 × 800 PNG and a 1280 × 640 social card; typography and layout were visually inspected.
+- README navigation, referenced local files and asset sizes are checked before private-repository upload.
+- No new paid five-minute sample, complete keyboard walkthrough, 200% zoom check or real playback acceptance is claimed.
+
+## Existing coverage
 
 Coverage includes:
 
