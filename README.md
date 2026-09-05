@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml"><img alt="Offline verification" src="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <img alt="macOS · Apple Silicon tested" src="https://img.shields.io/badge/macOS-Apple_Silicon_tested-111713?style=flat-square&amp;labelColor=263026">
+  <img alt="Runtime: macOS" src="https://img.shields.io/badge/runtime-macOS-111713?style=flat-square&amp;labelColor=263026">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-c8ff62?style=flat-square&amp;labelColor=263026"></a>
   <a href="CHANGELOG.md"><img alt="Version 1.6.2 · experimental" src="https://img.shields.io/badge/v1.6.2-experimental-ffb45e?style=flat-square&amp;labelColor=263026"></a>
 </p>
@@ -65,9 +65,11 @@
 
 ## 开始使用
 
-### 1 · 准备你的 Mac
+### 1 · 选择使用方式
 
-已在 **Apple Silicon Mac** 验证。需要 **Python 3.9+**、Apple 命令行工具与系统媒体组件。Windows、Linux 和 Intel Mac 尚未验证。
+**Mac 本机启动**：准备 Python 3.9+、Apple 命令行工具与系统媒体组件。Apple Silicon 和 Intel Mac 使用同一套启动步骤，由 `doctor.command` 检查本机依赖。
+
+**Windows / Linux 连接使用**：在自己的 Mac 上运行连续影像，通过 SSH 安全连接，在 Windows 或 Linux 浏览器中操作。媒体处理与作品保存在 Mac 端，连接步骤见下方折叠说明。
 
 若尚未安装 Apple 命令行工具，在终端运行：
 
@@ -77,7 +79,7 @@ xcode-select --install
 
 首次安装及媒体工具编译需要一些时间。日常使用无需 Node.js、Docker 或前端构建。
 
-### 2 · 下载并启动
+### 2 · 在 Mac 上下载并启动
 
 在仓库右上方选择 **Code → Download ZIP**，完整解压后：
 
@@ -99,11 +101,28 @@ cd framecurrent
 
 </details>
 
+<details>
+<summary><strong>Windows / Linux：连接自己的 Mac 使用</strong></summary>
+
+先在 Mac 上完成上述启动步骤，并为自己的账户开启 [远程登录](https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac)。两台设备应处于可互访的局域网或私人 VPN 中。
+
+在 Windows Terminal（PowerShell）或 Linux 终端中运行，将 `USER`、`MAC_ADDRESS` 替换为 Mac 用户名和网络地址：
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:4173:127.0.0.1:4173 USER@MAC_ADDRESS
+```
+
+保持连接终端开启，在当前电脑的浏览器打开 `http://127.0.0.1:4173`。Windows 若找不到 `ssh`，先安装 [OpenSSH 客户端](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)。
+
+这是连接 Mac 端运行实例的方式，无需在 Windows / Linux 上安装 Python 或媒体工具。更多连接设置与排错见 [跨设备使用指南](docs/QUICKSTART.md#windows--linux连接使用)。
+
+</details>
+
 ### 3 · 先完成一个30秒样片
 
 **选频道 → 保留30秒 / 480P → 验证 Key → 核对费用 → 确认开播 → 播放并下载。**
 
-从 [fal 控制台](https://fal.ai/dashboard/keys) 获取自己的 API Key。账户验证不生成视频；确认弹窗会列出频道、时长、画幅和本次估算。按照软件内置参考费率，30秒 / 480P 估算为 **$1.50**，最终费用以 fal 账单为准。
+从 [fal 控制台](https://fal.ai/dashboard/keys) 获取自己的 API Key。账户验证不生成视频；确认弹窗会列出频道、时长、画幅和本次估算。
 
 30秒是**成片长度**，生成需要另外等待。先检查短样片，再增加长度。完整操作、停止与片段取回见 [中文使用指南](docs/QUICKSTART.md)。
 
@@ -180,16 +199,12 @@ flowchart LR
 | 安装、第一段视频、故障排查 | [使用指南](docs/QUICKSTART.md) |
 | 更新内容、此次审核范围 | [更新日志](CHANGELOG.md) · [1.6.2审查记录](docs/REVIEW-1.6.2.md) |
 | 原理与源码结构 | [架构说明](docs/ARCHITECTURE.md) |
-| 已验证内容与尚未验证的能力 | [验证记录](docs/VERIFICATION.md) · [GitHub Actions](https://github.com/Grace-Omni/framecurrent/actions) |
+| 测试与运行记录 | [验证记录](docs/VERIFICATION.md) · [GitHub Actions](https://github.com/Grace-Omni/framecurrent/actions) |
 | 数据保存与安全问题 | [隐私](PRIVACY.md) · [安全报告](SECURITY.md) |
 | Logo、品牌与素材授权 | [品牌规范](docs/BRAND.md) · [素材清单](ASSETS.md) |
-
-自动化验证使用离线替身，不消耗 fal 余额。测试通过表示相应软件逻辑经过验证，长片效果仍需真实生成与播放检查。
 
 ## 许可证
 
 源码、文档及 [素材清单](ASSETS.md) 中标记为 Include 的资产按 **[Apache-2.0](LICENSE)** 分发。“连续影像”“FrameCurrent”及关联 Logo 的商标权保留，衍生产品应使用自己的主名称和视觉身份。详见 [NOTICE](NOTICE) 与 [TRADEMARKS.md](TRADEMARKS.md)。
-
-本项目与 MiniMax、fal、Apple 无官方隶属或背书关系。
 
 <p align="center"><br><strong>Frame by frame. Let the story flow.</strong><br><sub>连续影像 · FrameCurrent</sub></p>

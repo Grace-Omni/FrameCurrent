@@ -9,7 +9,29 @@
 3. 若缺少工具，在终端运行 `xcode-select --install`，等安装完成后重新检查。首次安装/编译时间取决于你的环境。
 4. 双击 `run.command`。网页地址为 `http://127.0.0.1:4173`，请保持启动终端开启。地址只在你的 Mac 上有效，不是分享链接。
 
-不需要 npm、Node.js、Docker 或前端构建。Node.js 仅用于开发者测试。当前尚未验证 Windows / Linux / Intel Mac，不承诺兼容。
+不需要 npm、Node.js、Docker 或前端构建。Node.js 仅用于开发者测试。Apple Silicon 与 Intel Mac 使用相同的启动流程，先用 `doctor.command` 检查本机依赖。Windows / Linux 用户可按下一节连接自己的 Mac 使用。
+
+## Windows / Linux连接使用
+
+连续影像在 Mac 端运行，Windows / Linux 作为浏览器操作端。准备一台你有权限使用的 Mac，两台设备应处于可互访的局域网或私人 VPN 中。
+
+1. 在 Mac 上按“第一次启动”完成环境检查与启动，并保持 Mac 唤醒、启动终端开启。
+2. 在 Mac 的“系统设置 → 通用 → 共享”开启“远程登录”，只允许自己的账户访问。完整步骤见 [Apple 远程登录指南](https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac)。无需开启远程用户的完全磁盘访问权限。
+3. 在 Windows Terminal（PowerShell）或 Linux 终端中运行下面的命令，将 `USER` 替换为 Mac 用户名、`MAC_ADDRESS` 替换为 Mac 的局域网或私人 VPN 地址。
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:4173:127.0.0.1:4173 USER@MAC_ADDRESS
+```
+
+首次连接时核对 Mac 的主机身份提示，再完成账户认证。登录后窗口保持等待是正常现象：`-N` 只建立连接，不进入远程命令行。保持该窗口开启，在当前电脑浏览器打开 `http://127.0.0.1:4173`。
+
+- **Windows 找不到 ssh**：通过“可选功能”安装 OpenSSH 客户端，见 [Microsoft 安装指南](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)。只需要客户端，不需要在 Windows 启动 SSH 服务端。
+- **Linux 找不到 ssh**：通过发行版的软件包管理器安装 OpenSSH 客户端后再连接。
+- **端口占用**：先退出客户端电脑上占用4173的程序；为保持应用的请求校验，转发两端使用相同端口。
+- **连接失败**：检查 Mac 是否唤醒、远程登录是否为自己的账户开放，以及网络或 VPN 能否到达 Mac。不要把4173端口直接暴露到公网。
+- **作品与任务**：作品原文件仍在 Mac，浏览器下载可以保存到当前电脑；切换设备前先在原浏览器停播并保存，避免重复开播。该方式供同一用户使用，不是多人共享服务。
+
+结束时先在网页停播并保存，再按 `Control-C` 关闭 SSH 连接。关闭连接不会关闭 Mac 上的软件；在 Mac 的启动终端中退出应用。
 
 ## 第一个30秒样片
 

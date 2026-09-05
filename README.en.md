@@ -55,9 +55,11 @@ Captured from a fresh local 1.6.2 session with no Key and no generation submitte
 
 ## Get started
 
-### 1 · Prepare your Mac
+### 1 · Choose how to connect
 
-Requirements: **Python 3.9+**, Apple Command Line Tools and the system media utilities. Tested on **Apple Silicon**. Windows, Linux and Intel Macs are not currently validated.
+**Run on your Mac:** prepare Python 3.9+, Apple Command Line Tools and the system media utilities. Apple Silicon and Intel Macs follow the same launch steps; `doctor.command` checks the local dependencies.
+
+**Connect from Windows / Linux:** run FrameCurrent on your own Mac, then use an SSH connection to access it in your Windows or Linux browser. Media processing and stored projects stay on the Mac; see the expandable instructions below.
 
 If Apple Command Line Tools are missing:
 
@@ -67,7 +69,7 @@ xcode-select --install
 
 The first installation and compilation can take time. Everyday use does not require Node.js, Docker or a frontend build.
 
-### 2 · Download and launch
+### 2 · Download and launch on the Mac
 
 Use **Code → Download ZIP**, fully extract it, then double-click `doctor.command` and `run.command`. Or use Git:
 
@@ -82,11 +84,28 @@ Repository access is required during private review. If the scripts lack executa
 
 Your browser opens `http://127.0.0.1:4173`. Keep the terminal open while using the app. On subsequent visits, run `run.command` again; a matching existing instance will reopen.
 
+<details>
+<summary><strong>Windows / Linux: connect to your Mac</strong></summary>
+
+Launch FrameCurrent on the Mac using the steps above, then enable [Remote Login](https://support.apple.com/guide/mac-help/allow-a-remote-computer-to-access-your-mac-mchlp1066/mac) for your own account. Both devices need to be reachable over your local network or private VPN.
+
+In Windows Terminal (PowerShell) or a Linux terminal, replace `USER` and `MAC_ADDRESS` with the Mac account name and network address:
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:4173:127.0.0.1:4173 USER@MAC_ADDRESS
+```
+
+Keep the SSH terminal open and visit `http://127.0.0.1:4173` in your browser. If Windows cannot find `ssh`, install the [OpenSSH client](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse).
+
+This connects to your Mac-hosted instance; Python and media tools are only needed on the Mac. Keep the Mac awake, allow only your own account to connect, and leave the app bound to loopback. Port 4173 must be free on the client; keep both ends on the same port. Before switching devices with a running generation, stop and save it in the original browser. This is a personal workspace, not a shared multi-user service.
+
+</details>
+
 ### 3 · Make a 30-second sample
 
 **Select a channel → keep 30s / 480P → verify your Key → review the estimate → confirm → preview and download.**
 
-Get a Key from the [fal dashboard](https://fal.ai/dashboard/keys). Connection checks do not submit a video. The confirmation dialog shows the channel, output length, format and estimated cost. At the app's built-in reference rate, 30 seconds at 480P is estimated at **$1.50**; actual billing is determined by fal.
+Get a Key from the [fal dashboard](https://fal.ai/dashboard/keys). Connection checks do not submit a video. The confirmation dialog shows the channel, output length, format and estimated cost.
 
 Thirty seconds is the output length, not the wait time. Review a short sample before increasing duration. Before closing the terminal, stop generation and save your clips.
 
@@ -133,12 +152,10 @@ Per-clip timing includes its source. GPU inference excludes queueing, encoding, 
 
 Feedback and contributions are welcome: [Issues](https://github.com/Grace-Omni/framecurrent/issues) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md).
 
-Explore the [architecture](docs/ARCHITECTURE.md), [verification record](docs/VERIFICATION.md), [privacy](PRIVACY.md), [security reporting](SECURITY.md), [brand guide](docs/BRAND.md) and [asset register](ASSETS.md). Tests use offline substitutes and do not establish live model speed or long-form visual quality.
+Explore the [architecture](docs/ARCHITECTURE.md), [verification record](docs/VERIFICATION.md), [privacy](PRIVACY.md), [security reporting](SECURITY.md), [brand guide](docs/BRAND.md) and [asset register](ASSETS.md).
 
 ## License
 
 Source, documentation and included assets listed in [ASSETS.md](ASSETS.md) are under **[Apache-2.0](LICENSE)**. Trademark rights in “连续影像”, “FrameCurrent” and associated logos remain reserved; derivative products should use a distinct identity. See [NOTICE](NOTICE) and [TRADEMARKS.md](TRADEMARKS.md).
-
-Not affiliated with or endorsed by MiniMax, fal or Apple.
 
 <p align="center"><br><strong>Frame by frame. Let the story flow.</strong><br><sub>连续影像 · FrameCurrent</sub></p>
