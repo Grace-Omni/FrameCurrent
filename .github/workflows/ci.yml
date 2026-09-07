@@ -27,13 +27,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          forbidden="$(git ls-files | grep -E '(^|/)(runtime|real-test)/|(^|/)manifest\.json$|\.(mp4|mov|m4v|webm|part|partial|pem|key|p12|mobileprovision)$|(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)"
+          # Only this reviewed built-in example is distributable, never runtime media.
+          allowed_demo="web/assets/animation-windmeadow-showcase-20s-v1.mp4"
+          forbidden="$(git ls-files | grep -E '(^|/)(runtime|real-test)/|(^|/)manifest\.json$|\.(mp4|mov|m4v|webm|part|partial|pem|key|p12|mobileprovision)$|(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' | grep -vFx "$allowed_demo" || true)"
           if [[ -n "$forbidden" ]]; then
             echo "Forbidden tracked artifacts:"
             echo "$forbidden"
             exit 1
           fi
-          large="$(find . -type f -size +10M -not -path './.git/*' -print)"
+          echo "a4b9ce81c2b35c0a2bc49cbd8759626c5d8c463ba4cc3c3add444df7db2c95d0  $allowed_demo" | shasum -a 256 -c -
+          large="$(find . -type f -size +10M -not -path './.git/*' -not -path "./$allowed_demo" -print)"
           if [[ -n "$large" ]]; then
             echo "Unexpected files larger than 10 MB:"
             echo "$large"
@@ -42,7 +45,7 @@ jobs:
 
       - name: Check Python and run offline tests
         run: |
-          /usr/bin/python3 -m py_compile app.py launcher.py
+          /usr/bin/python3 -m py_compile app.py director.py launcher.py
           /usr/bin/python3 -m unittest discover -s tests -v
 
       - name: Check JavaScript syntax

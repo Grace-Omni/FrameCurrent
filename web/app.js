@@ -9,6 +9,7 @@ const MIN_DURATION_SECONDS = 10;
 const MAX_DURATION_SECONDS = 1800;
 const MAX_LOCAL_ESTIMATED_BUDGET_USD = 150;
 const MAX_CLIP_MARKERS = 60;
+const DIRECTOR_SCENE_ALLOWANCE_USD = 0.04;
 
 const state = {
   durationSeconds: 30,
@@ -46,7 +47,9 @@ const state = {
   paymentDialogOpen: false,
   keyVerified: false,
   verifiedKey: "",
+  showcase: { active: false, epoch: 0 },
   preview: {
+    enabled: false,
     sessionId: null,
     clips: [],
     activeSlot: 0,
@@ -62,83 +65,75 @@ const state = {
 
 const presetProfiles = {
   hand_drawn_fantasy: {
-    number: "CH 01",
-    name: "日系手绘奇幻",
-    subject: "一架红色复古单翼滑翔机，驾驶舱内的成年短发女飞行员始终穿芥末黄斗篷、背红色邮差包并戴圆形护目镜",
-    scene: "漂浮在云海之上的手绘天空群岛，巨型风车、绿色草坡、瀑布和金色黄昏始终统一",
-    action: "滑翔机沿天空岛外侧的开阔航线稳定前飞，既有风车始终从左侧安全距离后退，远处天空鲸只缓慢变大",
-    camera: "电影感侧后方跟拍，低空平稳飞行，缓慢拉远揭示天空岛",
-    avoid: "不要写实真人质感、不要现有动画角色、不要文字Logo、不要突然变成3D塑料材质",
-    hint: "原创日系手绘动画质感；天空岛、强风与云海形成鲜明层次，建议16:9。",
+    "number": "CH 01",
+    "name": "日系手绘奇幻",
+    "revision": "windmeadow-v1",
+    "subject": "一位七八岁的小女孩，栗棕齐下巴短发、系陶红丝带的草帽、淡奶油黄短袖及膝夏裙、鼠尾草绿腰带、象牙白短袜和棕色便鞋；自然儿童身材约五头身，全身可见，占画面高度约四分之一，脸型、服装与身高始终一致；一只圆脸橘白宠物猫在她侧后方相伴，橘色虎斑背耳、白色口鼻胸腹和四爪、微弯橘尾，肩高约到孩子小腿，猫与孩子保持清楚间距",
+    "scene": "晴朗夏日上午的一片连绵青绿花草地，白色雏菊与少量淡粉野花、远处小巧红瓦奶油白农舍和蓝天中的奶油白积云；草地上有一条平缓、开阔的低草小径，近处细腻、中景清晰、远山柔和，纯手绘水彩背景",
+    "action": "治愈唯美的日系手绘动画；孩子与宠物的目标、发现和情绪随机演进，出现明显的新事件与反转，保持温暖基调，不指定事件顺序或结局",
+    "camera": "儿童视线略高的中远景平行跟拍，女孩通常全身可见、约占画面高度四分之一，脚下留出草地；镜头随追逐、减速、跪下与互动平缓调整，地平线水平，不突然推近、不环绕、不升空",
+    "avoid": "不要湖泊、河流、积水、倒影、小船或船篷；不要成人身形、巨人比例、大头娃娃、多人、多余肢体、换脸换装、脚底悬浮或滑步；不要文字Logo、3D塑料质感、写实真人、黄褐滤镜、狂奔跳跃、快速运镜或突然换景；不要巨型宠物、猫的花色变化、宠物复制、猫钻到孩子脚下或肢体交叠",
+    "hint": "日系手绘与夏日奇幻。小女孩和橘白猫的故事，由 AI 此刻展开。"
   },
   cinematic_scifi: {
     number: "CH 02",
     name: "科幻史诗电影",
-    subject: "一艘黑色三角深空侦察舰，银白骨架、三枚红色引擎和细长机翼始终一致",
-    scene: "日蚀中的气态巨行星与环形轨道遗迹，黑色金属、冷青体积光、红色引擎辉光和漂浮星尘保持统一",
-    action: "侦察舰沿环形巨构的开阔中轴稳定飞行，既有结构向两侧后退，远处中央核心只缓慢变大",
-    camera: "超宽银幕低机位跟拍，镜头缓慢抬升揭示轨道巨构尺度",
-    avoid: "不要卡通化、不要文字Logo或界面UI、不要飞船复制变形、不要爆炸遮挡主体或镜头翻滚",
-    hint: "日蚀、轨道巨构与体积光强调大银幕尺度，16:9和768P效果更突出。",
+    revision: "time-crystal-canyon-v1",
+    subject: "一位独行的成年时间勘探者，深炭灰兜帽长斗篷、黑色旅行靴和顶端发出微弱青光的细长手杖始终一致；人物从背后可辨认，比例自然，不出现第二位主角",
+    scene: "一条潮湿的黑色岩石峡谷，原位矗立着多根透明时间晶体：翠绿春林、明亮夏空、橙红秋林和冰雪寒冬分别封存在不同晶体中；峭壁、路径、晶体位置与风暴天空保持连续",
+    action: "电影级科幻冒险；探索未知规则、改变认知与目标，随机产生具有因果关系的重大事件和反转，不预设危机类型与结局",
+    camera: "电影级中远景后方跟拍，以湿润路径为轴缓慢推进；随着事件升级逐步抬升或侧移揭示晶体尺度，但保持人物方向、地形关系和镜头轴线连续",
+    avoid: "不要飞船、城市、枪战或额外主角；不要晶体、手杖或人物复制变形；不要随机换峡谷、瞬移季节、无因爆炸、硬切、快速甩镜、文字Logo、字幕、界面或水印",
+    hint: "电影级科幻世界，未知的规则与惊人的发现，正在生成。",
   },
   studio_variety: {
     number: "CH 03",
     name: "高能棚内综艺",
-    subject: "一位成年女主持人，利落短发、钴蓝色亮片西装和橙色手持麦克风始终一致",
-    scene: "大型环形LED综艺舞台，青蓝、洋红和琥珀灯阵、镜面地板、抽象动态图形与观众灯海保持统一",
-    action: "主持人沿清晰的舞台弧线缓慢走向中心，镜头保持安全距离，灯阵只在既有舞台结构内逐渐增强",
-    camera: "稳定的广播摇臂机位，围绕舞台中心平滑半环绕并轻微推近",
-    avoid: "不要可读文字、字幕、台标或Logo，不要第二位主持人抢镜、快速切镜、突然换装或肢体畸变",
-    hint: "单主持人加大型舞台机关，保留综艺高能感同时降低多人连续生成漂移，建议16:9。",
+    revision: "mechanical-moon-stage-v1",
+    subject: "一位成年女歌手，深色齐肩卷发、白色羽饰高级定制长礼服、银色高跟鞋和黑银手持麦克风始终一致；保持同一张脸、自然人体和完整礼服轮廓",
+    scene: "黑红主色的巨型电视演播厅，镜面舞台中央是一轮从中部裂开的银蓝机械月亮，顶部白色聚光、两侧红光机械结构、薄雾与地面反射保持统一；所有屏幕无可读文字",
+    action: "高能电视综艺；表演、挑战与现场互动随机演进，出现明显的目标转折和情绪高潮，不指定机关、事故或表演顺序",
+    camera: "稳定电视直播摇臂从中远景缓慢靠近并适度抬升，关键反转时才改变景别；始终保持歌手居中可辨、机械月亮空间关系清楚，不使用快速剪辑",
+    avoid: "不要第二位主持人或伴舞抢镜，不要突然换脸换装、麦克风复制、肢体畸变或礼服消失；不要可读文字、字幕、台标Logo、界面、水印、硬切、频闪和无因烟花",
+    hint: "高能舞台与临场惊喜，每一次开播都是全新的节目。",
   },
   travel_aerial: {
     number: "CH 04",
     name: "旅行电影航拍",
-    subject: "一列红白相间的三节观景列车，黑色全景车窗和流线型车头始终一致",
-    scene: "黄金时刻的高山海岸铁路，雪峰、翡翠湖、瀑布、松林山脊和海崖由同一条路线连接",
-    action: "观景列车始终沿可见的悬崖铁路向前，无人机稳定平行跟随并缓慢升高，远处海湾逐渐展开",
-    camera: "稳定无人机贴近主体前进并缓慢升高，始终保持地平线水平",
-    avoid: "不要城市高楼、文字Logo、天气或时间突变、道路断裂、列车复制变形、快速旋转或地理跳切",
-    hint: "用列车锁定连续路线，航拍逐渐升高展开雪山、湖湾与海岸，16:9最开阔。",
+    revision: "volcanic-ridge-storm-v1",
+    subject: "一位独行成年徒步者，芥末黄色防水连帽外套、黑色长裤、深色登山靴和黑色双肩包始终一致；人物背向镜头、体型比例自然，始终只有一名徒步者",
+    scene: "真实感火山岛海岸的狭窄绿色火山口山脊，左侧深蓝大海与黑色礁岸、右侧翡翠火山湖，前方黑色风暴云、雨幕和远处破云日光保持同一地理关系",
+    action: "沉浸式旅行纪实；基于真实地形随机发现新的路径、自然现象与有意义的选择，画面与旅程明显推进，不预设天气事件或目的地",
+    camera: "稳定无人机在人物后上方沿同一山脊轴线跟随；随着风暴逼近逐渐降低并靠近，脱险后再抬升揭示全景，地平线和左右海湖关系始终稳定",
+    avoid: "不要列车、汽车、城市、额外游客或虚构巨兽；不要山脊、海岸和火山湖换位，不要人物复制换衣、飞行悬浮、危险跳跃、天气瞬间跳变、硬切、快速旋转、文字Logo、字幕、界面或水印",
+    hint: "电影感航拍，沿未知的旅程，遇见下一处风景。",
   },
   costume_drama: {
     number: "CH 05",
     name: "AI古装短剧",
-    subject: "一位成年女侠，乌黑高马尾、月白窄袖劲装、深红披风和青铜剑鞘始终一致",
-    scene: "月色下的东方古代宫城屋脊与回廊，青瓦、朱墙、灯笼暖光和薄雾保持统一",
-    action: "女侠沿开阔屋脊稳定前行，既有宫墙从两侧后退，远处主殿只缓慢靠近",
-    camera: "电影感中远景侧后方跟拍，稳定平移，保持屋脊方向清楚",
-    avoid: "不要现代建筑服饰、不要现有影视角色、不要文字Logo、不要多人混战、不要飞檐穿模或快速旋转",
-    hint: "月下宫城、红白服饰与屋脊追踪形成强烈古装短剧感；少角色和单路线更利于连续生成。",
+    revision: "frontier-beacon-v1",
+    subject: "一位成年女将，墨黑高马尾、深色札甲、绯红窄袖内袍、残破深红披风和一柄黑鞘长剑始终一致；保持同一张脸、盔甲结构和自然成人比例",
+    scene: "落日沙暴下的古代边关城墙，女将站在粗粝垛口，深红残破披风向左飞扬；前方同一座山岭堡垒的烽火塔已经燃起，黑烟、残旗、城墙路线和荒漠群山保持连续",
+    action: "有强烈戏剧张力的古装故事；人物目标、线索与局势随机演进，出现有因果关系的重大揭示与反转，不预设阴谋或结局",
+    camera: "史诗古装中远景从女将侧后方跟拍，沿城墙轴线稳定推进；危机时适度靠近手、箭书与表情，高潮再抬升揭示烽火链，保持堡垒方位和人物动线连续",
+    avoid: "不要宫殿屋脊、现代物品、现有影视人物、多人混战或仙侠法术；不要女将换脸换装、披风剑鞘复制、穿墙飞行、堡垒瞬移、无因爆炸、硬切、快速旋转、文字Logo、字幕、界面或水印",
+    hint: "古装世界里的风云变幻，下一刻的故事尚未写下。",
   },
   custom_channel: {
     number: "CH ＋",
     name: "自定义频道",
     subject: "一个外形、材质和颜色始终一致的主角或主体",
     scene: "一个空间关系清晰、光线与材质统一的原创世界",
-    action: "主体沿一条无遮挡的路线持续运动，远处目标缓慢靠近",
+    action: "根据频道设定随机演进新事件，改变主角的目标、处境或认知，保持人物和因果连续",
     camera: "低机位缓慢跟随主体向前",
     avoid: "不要文字Logo、不要突然换景、不要主体复制变形、不要碰撞穿模",
-    hint: "为频道命名，再锁定一个主角、一个世界和一条持续动作路线。",
+    hint: "定义你的世界和视觉风格，让 AI 即兴演绎。",
   },
 };
 
 function presetFieldValues(field) {
   return Object.values(presetProfiles).map((profile) => profile[field]);
 }
-
-const sceneBeats = [
-  "沿着同一条路径继续向前，展开更深一层空间",
-  "从前景细节旁经过，主体保持原来的速度",
-  "光线在同一场景中柔和变化",
-  "绕过一处环境结构，世界继续自然延伸",
-  "靠近一处精致材质，再回到原来的前进方向",
-  "前方打开更宽阔的景深与空间",
-  "在不换场的前提下加入更梦幻的光影",
-  "穿过属于当前世界的一道小小边界",
-  "镜头轻微侧移，呈现温柔的空间层次",
-  "远处的视觉惊喜逐渐靠近",
-];
 
 const previewVideos = [$("#previewA"), $("#previewB")];
 
@@ -218,7 +213,8 @@ function estimatedCost() {
   if (state.durationMode === "unlimited") return 0;
   if (!state.durationValid) return 0;
   const rate = $("#resolution").value === "768P" ? 0.08 : 0.05;
-  return state.durationSeconds * rate;
+  const count = buildSchedule(state.durationSeconds, Number($("#clipDuration").value || 10)).length;
+  return state.durationSeconds * rate + count * DIRECTOR_SCENE_ALLOWANCE_USD;
 }
 
 function buildSchedule(durationSeconds, preferredSeconds) {
@@ -496,7 +492,7 @@ function selectChannel(preset, restoreSession = true) {
   $("#configForm").dataset.channelKind = isCustom ? "custom" : "preset";
   $("#controlModeCopy").textContent = isCustom
     ? "先定义节目内容，再确认生成参数。"
-    : "节目内容已经预设，只需确认生成参数。";
+    : "频道风格已就绪，AI 将即兴生成节目。";
   const draft = state.channelDrafts[preset] || (isCustom ? recalledCustomChannel() : null);
   if (draft) state.channelDrafts[preset] = draft;
   if (isCustom) {
@@ -519,7 +515,8 @@ function selectChannel(preset, restoreSession = true) {
     ["#avoidContent", "avoid", "avoidEdited", "avoidContent"],
   ].forEach(([selector, field, editedFlag, draftField]) => {
     const element = $(selector);
-    element.value = draft?.[draftField] || profile[field];
+    const draftMatches = !profile.revision || draft?.presetRevision === profile.revision;
+    element.value = (draftMatches && draft?.[draftField]) || profile[field];
     state[editedFlag] = false;
   });
   loadActiveChannelImage(!draft?.aspectRatio);
@@ -534,6 +531,7 @@ function selectChannel(preset, restoreSession = true) {
 
 function captureActiveChannelDraft() {
   return {
+    presetRevision: presetProfiles[state.activeChannelId]?.revision || "",
     customChannelName: $("#customChannelName").value.trim(),
     customChannelStyle: $("#customChannelStyle").value.trim(),
     subjectLock: $("#subjectLock").value.trim(),
@@ -807,12 +805,16 @@ function nextSceneFor(session) {
   if (session.next_chapter) return session.next_chapter;
   if (session.next_scene) return session.next_scene;
   if (session.next_beat) return session.next_beat;
-  const index = (session.clips || []).length % sceneBeats.length;
-  return sceneBeats[index];
+  return "下一幕正在即兴构思";
 }
 
-function friendlyError(message, fallback = "创作暂时中断，请稍后重试。已完成的内容仍然保留。") {
+function friendlyError(message, fallback = "创作暂时中断，请稍后重试。") {
   const value = String(message || "").toLowerCase();
+  if (value.includes("剧情")) {
+    if (["格式", "字段", "标记", "无效内容"].some((word) => value.includes(word))) return "AI 剧情返回格式未通过校验，请刷新页面后重新开播。";
+    if (["重复", "相似", "变化不足", "未构思出"].some((word) => value.includes(word))) return "AI 暂未构思出符合要求的新剧情，请重新开播。";
+    return "AI 剧情续写暂未完成，请刷新页面后重新开播。";
+  }
   if (value.includes("本地环境")) return "本地环境未就绪。请运行 doctor.command 检查工具与目录权限；此检查失败时不会提交付费生成。";
   if (value.includes("本地视频处理") || value.includes("视频下载未通过")) return "视频处理或下载检查未通过。可下载下方已保存片段；请先运行 doctor.command，不要反复付费开播。";
   if (value.includes("已有一个生成任务")) return "另一个频道正在生成，请返回该频道查看或停止续写。";
@@ -924,6 +926,13 @@ function updateMonitor(session) {
   const errorBox = $("#monitorError");
   errorBox.hidden = !session.error;
   errorBox.textContent = session.error ? friendlyError(session.error) : "";
+  if (session.error && session.status === "failed") {
+    errorBox.textContent += clips.length
+      ? ` 已保存 ${clips.length} 幕，可在下方下载。`
+      : Number(session.submitted_seconds || 0) === 0
+        ? " 本次尚未提交视频生成。"
+        : " 已提交的视频尚未保存，请先检查 fal 任务结果。";
+  }
   $("#stopButton").disabled = !["preparing", "generating"].includes(session.status);
   syncChannelBadge(session);
   updateCompletionActions(session);
@@ -940,7 +949,64 @@ function updateMonitor(session) {
   }
 }
 
-function resetPreview(sessionId = null) {
+function updatePreviewButton() {
+  const button = $("#previewButton");
+  const playing = state.showcase.active || state.preview.enabled;
+  const hasClips = Boolean(state.latestSession?.clips?.length);
+  const running = state.starting || (state.latestSession && !terminalStatuses.has(state.latestSession.status));
+  const hasExample = state.activeChannelId === "hand_drawn_fantasy" && !running;
+  button.disabled = !playing && !hasClips && !hasExample;
+  button.textContent = playing ? "关闭预览" : hasClips ? "预览已生成视频" : hasExample ? "预览示例" : "暂无可预览视频";
+  button.setAttribute("aria-pressed", String(playing));
+  $("#previewHint").textContent = playing
+    ? (running ? "仅关闭播放，不停止生成" : "关闭后回到黑屏，视频仍然保留")
+    : "仅播放已有视频，不启动生成";
+}
+
+function stopShowcase() {
+  state.showcase.epoch += 1;
+  state.showcase.active = false;
+  const video = $("#presetShowcase");
+  video.pause();
+  video.classList.remove("visible");
+  video.removeAttribute("src");
+  video.load();
+}
+
+async function togglePreview() {
+  if (state.showcase.active || state.preview.enabled) {
+    resetPreview(state.preview.sessionId);
+    return;
+  }
+  if (state.latestSession?.clips?.length) {
+    if (state.preview.sessionId !== state.latestSession.session_id) resetPreview(state.latestSession.session_id);
+    state.preview.clips = state.latestSession.clips;
+    state.preview.enabled = true;
+    updatePreviewButton();
+    await startPreview();
+    return;
+  }
+  if ($("#previewButton").disabled) return;
+  const video = $("#presetShowcase");
+  const epoch = ++state.showcase.epoch;
+  state.showcase.active = true;
+  updatePreviewButton();
+  video.src = video.dataset.src;
+  try {
+    await video.play();
+    if (state.showcase.epoch !== epoch) return;
+    video.classList.add("visible");
+    $("#stagePlaceholder").classList.add("hidden");
+    $("#liveStage").classList.add("screen-active");
+  } catch (_) {
+    if (state.showcase.epoch !== epoch) return;
+    resetPreview(state.preview.sessionId);
+    toast("示例暂时无法播放，请点击预览重试");
+  }
+}
+
+function resetPreview(sessionId = null, enabled = false) {
+  stopShowcase();
   const epoch = Number(state.preview?.epoch || 0) + 1;
   cancelAnimationFrame(state.preview.tickHandle);
   previewVideos.forEach((video) => {
@@ -951,6 +1017,7 @@ function resetPreview(sessionId = null) {
     video.load();
   });
   state.preview = {
+    enabled,
     sessionId,
     clips: [],
     activeSlot: 0,
@@ -963,9 +1030,13 @@ function resetPreview(sessionId = null) {
     epoch,
   };
   $("#stagePlaceholder").classList.remove("hidden");
+  $("#stagePlaceholder h3").textContent = "";
+  $("#stagePlaceholder p").textContent = "";
+  $("#liveStage").classList.remove("screen-active");
   $("#previewCaption").hidden = true;
   $("#bufferNotice").hidden = true;
   $("#previewElapsed").textContent = "00:00";
+  updatePreviewButton();
 }
 
 function clipUrl(index) {
@@ -996,7 +1067,7 @@ function loadPreviewSlot(slot, clipIndex) {
 }
 
 async function startPreview() {
-  if (state.preview.started || state.preview.clips.length < 1 || state.preview.syncing) return;
+  if (!state.preview.enabled || state.preview.started || state.preview.clips.length < 1 || state.preview.syncing) return;
   const epoch = state.preview.epoch;
   state.preview.syncing = true;
   try {
@@ -1017,13 +1088,14 @@ async function startPreview() {
     state.preview.started = true;
     state.preview.waiting = false;
     $("#stagePlaceholder").classList.add("hidden");
+    $("#liveStage").classList.add("screen-active");
     $("#previewCaption").hidden = false;
     $("#bufferNotice").hidden = true;
     updatePreviewClock();
   } catch (_) {
     if (state.preview.epoch !== epoch) return;
-    $("#stagePlaceholder h3").textContent = "画面正在缓冲";
-    $("#stagePlaceholder p").textContent = "AI完成下一幕后会自动继续。";
+    resetPreview(state.preview.sessionId);
+    toast("视频暂时无法播放，请点击预览重试");
   } finally {
     if (state.preview.epoch === epoch) state.preview.syncing = false;
   }
@@ -1078,6 +1150,8 @@ async function advancePreview() {
 async function syncPreview(session) {
   if (state.preview.sessionId !== session.session_id) resetPreview(session.session_id);
   state.preview.clips = session.clips || [];
+  updatePreviewButton();
+  if (!state.preview.enabled) return;
   const minimumBuffer = ["finalizing", "complete", "stopped"].includes(session.status) ? 1 : 2;
   if (!state.preview.started && state.preview.clips.length >= minimumBuffer) {
     await startPreview();
@@ -1223,10 +1297,8 @@ function resetMonitorForChannel() {
   $("#monitorState").className = "monitor-state idle";
   $("#monitorState").textContent = "准备就绪";
   $("#liveBadge").classList.remove("active");
-  $("#stagePlaceholder h3").textContent = "频道尚未开播";
-  $("#stagePlaceholder p").textContent = state.activeChannelId === "custom_channel"
-    ? "完成节目设置与开播设置后按“开播这个频道”。"
-    : "完成开播设置后按“开播这个频道”。";
+  $("#stagePlaceholder h3").textContent = "";
+  $("#stagePlaceholder p").textContent = "";
   $("#progressFill").style.width = "0%";
   $(".progress-track").classList.remove("indeterminate");
   $("#progressPercent").textContent = state.durationMode === "unlimited" ? "LIVE" : "0%";
@@ -1282,6 +1354,15 @@ async function loadChannelSession(channelId) {
       toast(presetProfiles[actualChannelId]
         ? `历史节目已归回“${presetProfiles[actualChannelId].name}”频道`
         : "这条历史节目不属于当前可用频道，已停止恢复");
+      return;
+    }
+    const requiredRevision = presetProfiles[channelId]?.revision || "";
+    const actualRevision = session.config?.preset_revision || "";
+    if (requiredRevision && actualRevision !== requiredRevision) {
+      delete state.channelSessions[channelId];
+      persistSessionMap();
+      resetMonitorForChannel();
+      toast("旧版频道节目已退出；可点击预览查看当前示例");
       return;
     }
     if (!state.channelDrafts[channelId]) {
@@ -1371,15 +1452,15 @@ function requestPaidStartConfirmation() {
   const resolution = $("#resolution").value;
   const clipDuration = Number($("#clipDuration").value || 10);
   const unlimited = state.durationMode === "unlimited";
-  const minimumBudget = Number((clipDuration * rate).toFixed(2));
+  const minimumBudget = Number((clipDuration * rate + DIRECTOR_SCENE_ALLOWANCE_USD).toFixed(2));
   const fixedBudget = Number(estimatedCost().toFixed(2));
   const floorBudgetCents = (value) => Math.floor(Number(value) * 100 + 1e-9) / 100;
 
   $("#paidDialogMode").textContent = unlimited ? "参考生成费率" : "本次预计费用";
-  $("#paidDialogCost").textContent = unlimited ? `${money(rate * 60)} / 分钟` : money(fixedBudget);
+  $("#paidDialogCost").textContent = unlimited ? `${money(rate * 60 + 60 / clipDuration * DIRECTOR_SCENE_ALLOWANCE_USD)} / 分钟` : money(fixedBudget);
   $("#paidDialogDetail").textContent = unlimited
-    ? `${$("#selectedChannelName").textContent} · ${state.aspectRatio} · ${resolution} · 持续至停止或达到下方上限`
-    : `${$("#selectedChannelName").textContent} · 成片${formatDuration(state.durationSeconds)} · ${state.aspectRatio} · ${resolution} · ${money(rate)}/秒（生成需另行等待）`;
+    ? `${$("#selectedChannelName").textContent} · ${state.aspectRatio} · ${resolution} · 含视频及 AI 剧情续写预留，持续至停止或达到下方上限`
+    : `${$("#selectedChannelName").textContent} · 成片${formatDuration(state.durationSeconds)} · ${state.aspectRatio} · ${resolution} · 含视频及 AI 剧情续写预留，实际以 fal 账单为准`;
   budgetField.hidden = !unlimited;
   budgetInput.min = minimumBudget.toFixed(2);
   budgetInput.max = MAX_LOCAL_ESTIMATED_BUDGET_USD.toFixed(2);
@@ -1513,6 +1594,7 @@ async function startSession(event) {
     resolution: $("#resolution").value,
     aspect_ratio: state.aspectRatio,
     preset: $("#preset").value,
+    preset_revision: presetProfiles[channelId]?.revision || "",
     custom_channel_name: state.activeChannelId === "custom_channel" ? $("#customChannelName").value.trim() : "",
     custom_channel_style: state.activeChannelId === "custom_channel" ? $("#customChannelStyle").value.trim() : "",
     concept: creatorConcept(),
@@ -1532,6 +1614,7 @@ async function startSession(event) {
   try {
     state.busy = true;
     updateStartEligibility();
+    state.latestSession = null;
     resetPreview();
     $("#monitorState").className = "monitor-state working";
     $("#monitorState").textContent = "AI创作中";
@@ -1553,7 +1636,9 @@ async function startSession(event) {
     setKeyStatus("任务已启动，密钥已从页面清除", "ok");
     if (state.activeChannelId !== channelId) return;
     state.sessionId = sessionId;
-    resetPreview(sessionId);
+    // Only a newly requested broadcast opts into automatic playback. Restored
+    // history and idempotent recovery remain black until an explicit preview.
+    resetPreview(sessionId, !result.idempotent_replay);
     updateMonitor(result.session);
     if (recoveredEarlierSettings) {
       $("#monitorError").hidden = false;
@@ -1577,6 +1662,7 @@ async function startSession(event) {
   } finally {
     state.starting = false;
     updateStartEligibility();
+    updatePreviewButton();
   }
 }
 
@@ -1739,6 +1825,10 @@ $("#apiKey").addEventListener("input", () => {
 $("#verifyKeyButton").addEventListener("click", verifyApiKey);
 $("#configForm").addEventListener("submit", startSession);
 $("#stopButton").addEventListener("click", stopSession);
+$("#previewButton").addEventListener("click", togglePreview);
+$("#presetShowcase").addEventListener("ended", () => {
+  if (state.showcase.active) resetPreview(state.preview.sessionId);
+});
 
 state.channelDrafts = recalledChannelDrafts();
 state.channelSessions = recalledSessions();

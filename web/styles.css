@@ -196,22 +196,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .monitor-state.failed { color: var(--red); background: rgba(255,123,112,.1); }
 .live-stage { width: min(100%, 348px); aspect-ratio: 9 / 16; max-height: 505px; margin: 0 auto; position: relative; overflow: hidden; border-radius: 22px; border: 1px solid rgba(var(--preset-rgb, 255,255,255),.18); background: var(--stage-bg, radial-gradient(circle at 50% 42%, #1c291d, #090b09 70%)); box-shadow: 0 24px 70px rgba(0,0,0,.35); transition: width .25s ease, aspect-ratio .25s ease, background .25s ease; }
 .live-stage.landscape { width: 100%; max-height: none; aspect-ratio: 16 / 9; }
-.live-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; background: #060706; transition: opacity .18s linear; }
-.live-stage video.visible { opacity: 1; }
+.live-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; visibility: hidden; background: #000; transition: opacity .18s linear; pointer-events: none; }
+.live-stage video.visible { opacity: 1; visibility: visible; }
 .stage-placeholder { position: absolute; inset: 0; padding: 32px; display: grid; align-content: center; text-align: center; background: linear-gradient(180deg, rgba(17,26,18,.7), rgba(4,5,4,.92)); }
 .stage-placeholder.hidden { display: none; }
 .stage-placeholder h3 { margin: 25px 0 9px; font-size: 15px; }
 .stage-placeholder p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
-.chain-illustration { display: flex; justify-content: center; align-items: center; }
-.chain-illustration i { width: 48px; height: 68px; border: 1px solid rgba(200,255,98,.25); background: linear-gradient(145deg, rgba(200,255,98,.09), transparent); border-radius: 10px; margin-left: -10px; transform: rotate(-5deg); }
-.chain-illustration i:nth-child(2) { transform: translateY(-5px); border-color: rgba(249,180,94,.35); }
-.chain-illustration i:nth-child(3) { transform: rotate(5deg); }
+.stage-placeholder h3:empty, .stage-placeholder p:empty { display: none; }
+.live-stage .preset-showcase { object-fit: contain; }
+.live-stage .preset-showcase.visible { pointer-events: auto; }
+.stage-placeholder h3, .stage-placeholder p { position: relative; z-index: 2; }
+.live-stage:not(.screen-active) .live-badge { display: none; }
+.preview-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.preview-controls > span { color: var(--muted); font-size: 10px; }
+.preview-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 1px solid rgba(var(--preset-rgb),.32); border-radius: 9px; background: rgba(var(--preset-rgb),.07); color: var(--text); font: inherit; font-size: 11px; cursor: pointer; }
+.preview-button::before { content: "▶"; color: var(--preset-accent); font-size: 9px; }
+.preview-button[aria-pressed="true"]::before { content: "■"; }
+.preview-button:hover:not(:disabled) { border-color: var(--preset-accent); background: rgba(var(--preset-rgb),.13); }
+.preview-button:focus-visible { outline: 2px solid var(--preset-accent); outline-offset: 3px; }
+.preview-button:disabled { opacity: .4; cursor: default; }
 .live-badge { position: absolute; z-index: 3; top: 13px; left: 13px; display: flex; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 99px; background: rgba(3,5,3,.62); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); color: rgba(255,255,255,.7); font: 800 9px ui-monospace, monospace; letter-spacing: .12em; }
 .live-badge i { width: 6px; height: 6px; border-radius: 50%; background: #59605a; }
 .live-badge.active i { background: var(--lime); box-shadow: 0 0 8px var(--lime); animation: blink 1s infinite alternate; }
 @keyframes blink { to { opacity: .42; } }
 .preview-caption { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; display: flex; gap: 9px; align-items: center; padding: 9px 11px; border-radius: 11px; background: rgba(3,5,3,.68); border: 1px solid rgba(255,255,255,.1); backdrop-filter: blur(12px); color: rgba(255,255,255,.72); font-size: 9px; }
 .preview-caption b { color: var(--lime); font: 700 12px ui-monospace, monospace; }
+.preview-caption[hidden] { display: none; }
 .muted-label { margin-left: auto; color: rgba(255,255,255,.42); }
 .buffer-notice { position: absolute; z-index: 4; left: 50%; bottom: 58px; transform: translateX(-50%); width: calc(100% - 28px); padding: 10px 12px; text-align: center; color: #f4c58d; background: rgba(32,23,12,.84); border: 1px solid rgba(249,180,94,.28); border-radius: 10px; font-size: 10px; line-height: 1.5; backdrop-filter: blur(12px); }
 .live-content { padding-top: 24px; }
@@ -319,11 +329,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .channel-strip { display: grid; grid-template-columns: repeat(6, minmax(170px,1fr)); gap: 9px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.17) transparent; }
 .channel-card { position: relative; min-width: 170px; min-height: 116px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; border: 1px solid rgba(255,255,255,.14); border-radius: 15px; padding: 12px; color: #fff; text-align: left; cursor: pointer; background-image: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.88)), url("/assets/channel-art-atlas.png"); background-size: 100% 100%, 500% auto; background-repeat: no-repeat; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
 .channel-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); border-radius: inherit; }
-.channel-card.fantasy { background-position: center, 0% 58%; }
-.channel-card.scifi { background-position: center, 25% 60%; }
-.channel-card.variety { background-position: center, 50% 26%; }
-.channel-card.aerial { background-position: center, 75% 78%; }
-.channel-card.costume { background-position: center, 100% 32%; }
+.channel-card.fantasy { background-image: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.82)), url("/assets/animation-windmeadow-landscape-v1.png"); background-size: 100% 100%, cover; background-position: center; }
+.channel-card.scifi { background-image: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.84)), url("/assets/scifi-time-crystal-canyon-landscape-v1.jpg"); background-size: 100% 100%, cover; background-position: center; }
+.channel-card.variety { background-image: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.84)), url("/assets/variety-mechanical-moon-landscape-v1.jpg"); background-size: 100% 100%, cover; background-position: center; }
+.channel-card.aerial { background-image: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.84)), url("/assets/travel-volcanic-ridge-landscape-v1.jpg"); background-size: 100% 100%, cover; background-position: center; }
+.channel-card.costume { background-image: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.84)), url("/assets/costume-frontier-beacon-landscape-v1.jpg"); background-size: 100% 100%, cover; background-position: center; }
 .channel-card.custom { background-image: radial-gradient(circle at 72% 24%, rgba(200,255,98,.23), transparent 27%), linear-gradient(135deg, #19221a, #090c0a 70%); background-size: 100% 100%; background-position: center; }
 .channel-card:hover { transform: translateY(-2px); border-color: rgba(var(--preset-rgb),.55); }
 .channel-card.selected { border-color: var(--preset-accent, var(--lime)); box-shadow: 0 0 0 1px var(--preset-accent, var(--lime)), 0 12px 34px rgba(0,0,0,.3); }
@@ -352,10 +362,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .workspace-grid { grid-template-columns: minmax(0,1.55fr) minmax(330px,.72fr); grid-template-areas: "screen controls"; gap: 15px; margin-top: 14px; }
 .live-panel { grid-area: screen; top: 14px; padding: 22px; border-color: rgba(var(--preset-rgb),.18); }
 .config-panel { grid-area: controls; padding: 22px; }
-.live-stage, .live-stage.landscape { width: 100%; max-height: none; aspect-ratio: 16 / 9; border-radius: 18px; border: 8px solid #040504; outline: 1px solid rgba(255,255,255,.14); background: var(--stage-bg); box-shadow: 0 28px 76px rgba(0,0,0,.44), inset 0 0 60px rgba(0,0,0,.42); }
+.live-stage, .live-stage.landscape { width: 100%; max-height: none; aspect-ratio: 16 / 9; border-radius: 18px; border: 8px solid #040504; outline: 1px solid rgba(255,255,255,.14); background: #000; box-shadow: 0 28px 76px rgba(0,0,0,.44), inset 0 0 60px rgba(0,0,0,.42); }
 .live-stage:not(.landscape) video { object-fit: contain; }
-.stage-placeholder { background: linear-gradient(180deg, rgba(8,12,9,.42), rgba(3,4,3,.88)), var(--stage-bg); }
-.stage-placeholder::after { content: "FRAMECURRENT · CONTINUOUS CINEMA"; margin-top: 20px; color: rgba(255,255,255,.2); font: 800 8px ui-monospace, monospace; letter-spacing: .16em; }
+.stage-placeholder { background: #000; }
 .live-content { padding-top: 20px; }
 .telemetry-grid { grid-template-columns: repeat(4,1fr); }
 .monitor-actions { grid-template-columns: 1fr 1fr; }

@@ -2,6 +2,35 @@
 
 All notable changes are documented here. Dates use Asia/Shanghai local time.
 
+## 1.7.1 — 2026-09-07
+
+- Start every channel on a black player. Make example and restored-video playback opt-in through a preview toggle, with no automatic media download. Closing a preview keeps existing files and any generation task intact.
+- Accept harmless event-key variations (underscores, spaces, letter case and Unicode dashes) locally, without another paid planning request. Keep story-novelty checks after normalization.
+- Separate format corrections from story revisions. Send validated fields as retry context, never escaped raw model output; retain rejection details only in local diagnostics.
+- Show the specific story-planning failure in the player and distinguish saved clips from video that was never submitted or has not yet been saved.
+
+## 1.7.0 — 2026-09-07
+
+- Replace all prewritten and cyclic scene tables with stochastic, frame-grounded improvisation for every duration and channel, including custom channels. The last scene of a fixed-length programme receives a remaining-time constraint for closure.
+- Before each video request, use fal's `openrouter/router/vision` with `google/gemini-2.5-flash-lite` to review chronological first/middle/last frame samples and cumulative story memory. Observations remain model reports, not full-video or human verification.
+- Require a consequential new goal, dilemma, discovery or reversal. Reject duplicate/near-duplicate plans, reported semantic repeats and low-impact plans; allow one new planning attempt, then stop instead of falling back to an old script.
+- Persist scene plans, video prompts and story memory locally. Include planning allowances and returned usage costs in the existing start confirmation and estimated-budget guard. Unknown request outcomes are not resubmitted.
+- Replace plot spoilers in channel descriptions with AI-TV channel identities.
+- Verified with offline provider substitutes and local media/browser checks; new paid generation is still required to assess narrative quality.
+
+## 1.6.3 — 2026-09-05
+
+### Animation channel
+
+- Rebuild the hand-drawn animation channel around an original healing summer meadow, a naturally proportioned child and one orange-and-white pet cat, with separate built-in 16:9 and 9:16 opening frames.
+- Add a duration-aware story scheduler: butterfly pursuit, a windblown hat, the cat's rescue, recovery and reunion are expanded or compressed to the actual clip plan.
+- Make each scene advance a visible action, expression or prop state while inheriting the actual previous frame. Planned beats are treated as intent rather than proof, so missing actions receive a causal bridge instead of a teleport or reset.
+- Lock the current server-owned preset revision so stale browser drafts cannot mix the former animation concept into the new artwork.
+
+### Verification boundary
+
+- Added offline coverage for both reference-frame orientations, stale-draft replacement, 5/10/15-second scene planning and story-continuation prompts. No fal generation was submitted while preparing this update.
+
 ## Repository presentation — 2026-09-05
 
 - Refresh the bilingual product introduction, brand cover and 1280 × 640 social-preview card.

@@ -35,6 +35,12 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from director import (
+    DIRECTOR_ENDPOINT, DIRECTOR_MODEL, DIRECTOR_ATTEMPT_ALLOWANCE_USD,
+    DIRECTOR_SCENE_ALLOWANCE_USD, DIRECTOR_MAX_ATTEMPTS, StoryPlanError,
+    build_director_arguments, parse_scene_plan, scene_video_instruction,
+)
+
 
 APP_ROOT = Path(__file__).resolve().parent
 WEB_ROOT = APP_ROOT / "web"
@@ -42,7 +48,7 @@ SCRIPT_ROOT = APP_ROOT / "scripts"
 RUNTIME_ROOT = APP_ROOT / "runtime"
 SESSION_ROOT = RUNTIME_ROOT / "sessions"
 BIN_ROOT = RUNTIME_ROOT / "bin"
-APP_VERSION = "1.6.2"
+APP_VERSION = "1.7.1"
 APP_ID = "framecurrent"
 # Identifies this checkout without exposing its absolute path to the browser.
 INSTANCE_ID = hashlib.sha256(str(APP_ROOT).encode("utf-8")).hexdigest()[:24]
@@ -85,95 +91,95 @@ BOUNDARY_SIMILARITY_MIN = 0.96
 PRESETS: Dict[str, Dict[str, Any]] = {
     "hand_drawn_fantasy": {
         "name": "日系手绘奇幻动画",
-        "subject": "一架红色复古单翼滑翔机，驾驶舱内的成年短发女飞行员始终穿芥末黄斗篷、背红色邮差包并戴圆形护目镜",
-        "base": (
-            "An original Japanese hand-drawn fantasy animation with painterly cel shading, expressive wind, "
-            "luminous cloud layers, jewel-like colors, dramatic scale and richly illustrated backgrounds. "
-            "The design must be original and must not copy any existing artist, studio, franchise or character. "
-            "Use a single fluid aerial journey, clean silhouettes, strong foreground parallax and a warm orchestral "
-            "adventure atmosphere while preserving one coherent illustrated world."
-        ),
-        "beats": [
-            "A vast floating island casts a moving shadow across the flight path while the aircraft keeps course.",
-            "Enormous windmill blades turn through the foreground and create bold layered parallax.",
-            "A colossal cloud whale gradually emerges in the distance and begins gliding parallel to the aircraft.",
-            "The aircraft passes through a luminous cloud arch without changing direction or resetting the scene.",
-            "Mist from an island waterfall crosses the path, then clears to reveal the same connected sky route.",
-            "A higher tier of floating islands opens ahead as golden light spreads through the cloud sea.",
-        ],
+        "revision": "windmeadow-v1",
+        "subject": "一位七八岁的小女孩，栗棕齐下巴短发、系陶红丝带的草帽、淡奶油黄短袖及膝夏裙、鼠尾草绿腰带、象牙白短袜和棕色便鞋；自然儿童身材约五头身，全身可见，占画面高度约四分之一，脸型、服装与身高始终一致；一只圆脸橘白宠物猫在她侧后方相伴，橘色虎斑背耳、白色口鼻胸腹和四爪、微弯橘尾，肩高约到孩子小腿，猫与孩子保持清楚间距",
+        "scene_setting": "晴朗夏日上午的一片连绵青绿花草地，白色雏菊与少量淡粉野花、远处小巧红瓦奶油白农舍和蓝天中的奶油白积云；草地上有一条平缓、开阔的低草小径，近处细腻、中景清晰、远山柔和，纯手绘水彩背景",
+        "story_action": "治愈唯美的日系手绘动画；孩子与宠物的目标、发现和情绪随机演进，出现明显的新事件与反转，保持温暖基调，不指定事件顺序或结局",
+        "camera_direction": "儿童视线略高的中远景平行跟拍，女孩通常全身可见、约占画面高度四分之一，脚下留出草地；镜头随追逐、减速、跪下与互动平缓调整，地平线水平，不突然推近、不环绕、不升空",
+        "avoid_content": "不要湖泊、河流、积水、倒影、小船或船篷；不要成人身形、巨人比例、大头娃娃、多人、多余肢体、换脸换装、脚底悬浮或滑步；不要文字Logo、3D塑料质感、写实真人、黄褐滤镜、狂奔跳跃、快速运镜或突然换景；不要巨型宠物、猫的花色变化、宠物复制、猫钻到孩子脚下或肢体交叠",
+        "reference_frames": {
+            "16:9": "animation-windmeadow-landscape-v1.png",
+            "9:16": "animation-windmeadow-portrait-v1.png"
+        },
+        "base": "A healing, beautiful Japanese hand-drawn pastoral fantasy animation inspired by the lyrical summer atmosphere of Hayao Miyazaki, with an original setting and original child design, not an existing movie scene or character. Theme: A Breeze Through the Flower Meadow. Delicate 2D cel linework and richly painted watercolor/gouache backgrounds, nuanced fresh leaf greens, luminous ivory cumulus clouds in a clear blue sky, small white daisies and restrained blush flowers. Softly warm morning sunlight, cool gentle shadows and subtle paper texture; no sepia cast, plastic 3D look or harsh bloom. One seven-to-eight-year-old girl has a chestnut chin-length bob, straw hat with a muted rust ribbon, pale butter-yellow short-sleeved knee-length dress, sage-green sash, ivory ankle socks and brown shoes. Preserve natural child proportions, around five heads tall, not chibi or an adult body. Her complete figure usually occupies roughly one quarter of image height with grounded feet and ample meadow around her. Keep footfalls, leg alternation, reaching, slowing and kneeling physically coherent; no sliding, floating or impossible balance. Begin with a stable medium-wide side view, then ease the camera naturally with the story while preserving screen direction and geography. A tiny farmhouse remains far away in the same connected rolling meadow. Hair ends, ribbon, dress hem and flowers respond consistently to the breeze. Every scene must contain a readable cause, reaction and changed story state; never reduce the programme to a decorative walk cycle, idle loop or screensaver. Soft footsteps on grass, gentle leaves and distant birds form a consistent sound bed; no speech or dramatic music swell. This is entirely dry grassland: no lake, river, boat, water surface or reflections. Exactly one small round-faced orange-and-white pet cat accompanies her, with orange tabby back and ears, white muzzle/chest/belly and paws, and a gently raised curved orange tail. Its shoulder height is about one fifth of the child's height, around her lower calf. Maintain coherent four-paw ground contact, constant fur markings and stable scale; no collision, crossing under her feet or unexplained duplication.",
     },
     "cinematic_scifi": {
         "name": "电影级科幻史诗",
-        "subject": "一艘黑色三角深空侦察舰，银白骨架、三枚红色引擎和细长机翼始终一致",
+        "revision": "time-crystal-canyon-v1",
+        "subject": "一位独行的成年时间勘探者，深炭灰兜帽长斗篷、黑色旅行靴和顶端发出微弱青光的细长手杖始终一致；人物从背后可辨认，比例自然，不出现第二位主角",
+        "scene_setting": "一条潮湿的黑色岩石峡谷，原位矗立着多根透明时间晶体：翠绿春林、明亮夏空、橙红秋林和冰雪寒冬分别封存在不同晶体中；峭壁、路径、晶体位置与风暴天空保持连续",
+        "story_action": "电影级科幻冒险；探索未知规则、改变认知与目标，随机产生具有因果关系的重大事件和反转，不预设危机类型与结局",
+        "camera_direction": "电影级中远景后方跟拍，以湿润路径为轴缓慢推进；随着事件升级逐步抬升或侧移揭示晶体尺度，但保持人物方向、地形关系和镜头轴线连续",
+        "avoid_content": "不要飞船、城市、枪战或额外主角；不要晶体、手杖或人物复制变形；不要随机换峡谷、瞬移季节、无因爆炸、硬切、快速甩镜、文字Logo、字幕、界面或水印",
+        "reference_frames": {
+            "16:9": "scifi-time-crystal-canyon-landscape-v1.jpg",
+            "9:16": "scifi-time-crystal-canyon-portrait-v1.jpg"
+        },
         "base": (
-            "A high-budget hard-science-fiction feature film shot with vast orbital megastructures, a gas giant "
-            "during eclipse, cold cyan rim light, red engine glow, volumetric dust and physically believable scale. "
-            "Use anamorphic lens character, deep blacks, precise metallic detail and a monumental reveal. The ship "
-            "moves along one readable flight path with no teleporting, no shape change and no chaotic battle montage."
+            "A high-budget original science-fiction feature film inside one colossal time-crystal canyon. Transparent "
+            "monoliths physically contain four distinct seasonal worlds: lush spring green, bright blue summer, fiery "
+            "orange autumn and frozen winter. A lone hooded time explorer follows the wet black-rock path with one "
+            "cyan-tipped staff. Use deep blacks, prismatic refraction, crisp atmospheric depth and physically believable "
+            "scale. Preserve the exact explorer, staff, path, cliffs and crystal positions while the conflict escalates."
         ),
-        "beats": [
-            "The craft passes beneath a colossal structural arch as the gas giant slowly fills more of the background.",
-            "Rows of amber maintenance lights ignite sequentially along the same corridor ahead.",
-            "A sparse field of metallic debris catches the eclipse rim light while remaining clear of the flight path.",
-            "The craft crosses a translucent energy veil that ripples around it without altering the surrounding structure.",
-            "A distant star moves out from eclipse and gradually carves a brilliant rim around the craft and megastructure.",
-            "The corridor opens into the vast central ring core, revealed through scale and parallax rather than a cut.",
-        ],
     },
     "studio_variety": {
         "name": "高能棚内综艺",
-        "subject": "一位成年女主持人，利落短发、钴蓝色亮片西装和橙色手持麦克风始终一致",
+        "revision": "mechanical-moon-stage-v1",
+        "subject": "一位成年女歌手，深色齐肩卷发、白色羽饰高级定制长礼服、银色高跟鞋和黑银手持麦克风始终一致；保持同一张脸、自然人体和完整礼服轮廓",
+        "scene_setting": "黑红主色的巨型电视演播厅，镜面舞台中央是一轮从中部裂开的银蓝机械月亮，顶部白色聚光、两侧红光机械结构、薄雾与地面反射保持统一；所有屏幕无可读文字",
+        "story_action": "高能电视综艺；表演、挑战与现场互动随机演进，出现明显的目标转折和情绪高潮，不指定机关、事故或表演顺序",
+        "camera_direction": "稳定电视直播摇臂从中远景缓慢靠近并适度抬升，关键反转时才改变景别；始终保持歌手居中可辨、机械月亮空间关系清楚，不使用快速剪辑",
+        "avoid_content": "不要第二位主持人或伴舞抢镜，不要突然换脸换装、麦克风复制、肢体畸变或礼服消失；不要可读文字、字幕、台标Logo、界面、水印、硬切、频闪和无因烟花",
+        "reference_frames": {
+            "16:9": "variety-mechanical-moon-landscape-v1.jpg",
+            "9:16": "variety-mechanical-moon-portrait-v1.jpg"
+        },
         "base": (
-            "A premium prime-time studio variety show with a spectacular curved LED stage, saturated cyan, magenta "
-            "and amber light blocks, glossy reflections, moving beams, audience silhouettes and confident broadcast "
-            "production design. Keep all LED graphics abstract and free of readable text or logos. Use one smooth "
-            "broadcast-crane move, energetic lighting cues, clean staging and a consistent host identity."
+            "A premium prime-time television music spectacle on one monumental red-and-black stage. One adult female "
+            "singer in a white feathered couture gown stands before a split silver-blue mechanical moon with glossy floor "
+            "reflections, focused white spotlights and restrained haze. Preserve her face, gown, microphone and position, "
+            "and make every technical stage event a causal part of one escalating live performance, never a random montage."
         ),
-        "beats": [
-            "A cyan light chase travels from the stage perimeter toward the host while the camera keeps its smooth arc.",
-            "Magenta beams sweep across the same stage geometry and reflect in the floor behind the host.",
-            "The seated audience creates one synchronized wave of handheld lights without entering the foreground.",
-            "A circular stage mechanism rotates slowly beneath the host while her position and scale remain stable.",
-            "A controlled confetti burst fires from one fixed stage unit and clears without obscuring the host.",
-            "All light arrays converge into a high-energy final tableau while the uninterrupted crane move continues.",
-        ],
     },
     "travel_aerial": {
         "name": "旅行电影航拍",
-        "subject": "一列红白相间的三节观景列车，黑色全景车窗和流线型车头始终一致",
+        "revision": "volcanic-ridge-storm-v1",
+        "subject": "一位独行成年徒步者，芥末黄色防水连帽外套、黑色长裤、深色登山靴和黑色双肩包始终一致；人物背向镜头、体型比例自然，始终只有一名徒步者",
+        "scene_setting": "真实感火山岛海岸的狭窄绿色火山口山脊，左侧深蓝大海与黑色礁岸、右侧翡翠火山湖，前方黑色风暴云、雨幕和远处破云日光保持同一地理关系",
+        "story_action": "沉浸式旅行纪实；基于真实地形随机发现新的路径、自然现象与有意义的选择，画面与旅程明显推进，不预设天气事件或目的地",
+        "camera_direction": "稳定无人机在人物后上方沿同一山脊轴线跟随；随着风暴逼近逐渐降低并靠近，脱险后再抬升揭示全景，地平线和左右海湖关系始终稳定",
+        "avoid_content": "不要列车、汽车、城市、额外游客或虚构巨兽；不要山脊、海岸和火山湖换位，不要人物复制换衣、飞行悬浮、危险跳跃、天气瞬间跳变、硬切、快速旋转、文字Logo、字幕、界面或水印",
+        "reference_frames": {
+            "16:9": "travel-volcanic-ridge-landscape-v1.jpg",
+            "9:16": "travel-volcanic-ridge-portrait-v1.jpg"
+        },
         "base": (
-            "A breathtaking premium travel-film aerial over one continuous alpine coastal valley at sunrise: "
-            "snow peaks, a turquoise lake, waterfalls, pine ridges and sea cliffs connected by the same railway. "
-            "Use a stabilized cinematic drone flight with crisp atmospheric depth, golden side light, grand scale "
-            "and a gradual high reveal. Preserve geography, weather, train design, direction and a level horizon."
+            "A premium travel-documentary aerial over one real volcanic island ridge: a lone hiker in a mustard-yellow "
+            "rain jacket follows the narrow green crater trail, with deep ocean and black sea cliffs on the left, an "
+            "emerald crater lake on the right, and a dark storm shelf and rain shaft ahead. Use stabilized drone realism, "
+            "crisp natural texture and physically gradual weather. Preserve the exact hiker, path and ocean-lake geography."
         ),
-        "beats": [
-            "The train follows a broad cliffside curve while the coastline produces deep foreground-to-horizon parallax.",
-            "The train passes through a short rock tunnel and returns to the same connected coastline and weather.",
-            "A tall waterfall appears beside the railway and its mist drifts briefly across the drone's path.",
-            "The drone gains altitude gradually and reveals the next bay physically connected to the current headland.",
-            "Golden sunlight breaks across the turquoise water while the train maintains speed and direction.",
-            "The nearest cliff recedes to reveal a sweeping railway bridge and the continuous coast beyond it.",
-        ],
     },
     "costume_drama": {
         "name": "AI古装短剧",
-        "subject": "一位成年女侠，墨黑高马尾、绯红窄袖劲装、银色护腕和一柄黑鞘长剑始终一致",
+        "revision": "frontier-beacon-v1",
+        "subject": "一位成年女将，墨黑高马尾、深色札甲、绯红窄袖内袍、残破深红披风和一柄黑鞘长剑始终一致；保持同一张脸、盔甲结构和自然成人比例",
+        "scene_setting": "落日沙暴下的古代边关城墙，女将站在粗粝垛口，深红残破披风向左飞扬；前方同一座山岭堡垒的烽火塔已经燃起，黑烟、残旗、城墙路线和荒漠群山保持连续",
+        "story_action": "有强烈戏剧张力的古装故事；人物目标、线索与局势随机演进，出现有因果关系的重大揭示与反转，不预设阴谋或结局",
+        "camera_direction": "史诗古装中远景从女将侧后方跟拍，沿城墙轴线稳定推进；危机时适度靠近手、箭书与表情，高潮再抬升揭示烽火链，保持堡垒方位和人物动线连续",
+        "avoid_content": "不要宫殿屋脊、现代物品、现有影视人物、多人混战或仙侠法术；不要女将换脸换装、披风剑鞘复制、穿墙飞行、堡垒瞬移、无因爆炸、硬切、快速旋转、文字Logo、字幕、界面或水印",
+        "reference_frames": {
+            "16:9": "costume-frontier-beacon-landscape-v1.jpg",
+            "9:16": "costume-frontier-beacon-portrait-v1.jpg"
+        },
         "base": (
             "An original premium Chinese costume-drama television serial with cinematic production design, "
-            "layered palace and riverside architecture, wind-driven fabric, dramatic practical light, elegant "
-            "martial-arts blocking and emotionally readable close-to-medium staging. Preserve the same adult heroine, "
-            "costume, weapon, geography and screen direction in one coherent unfolding scene. Do not copy any existing "
-            "film, television series, performer, franchise or character."
+            "set on one ancient frontier wall beneath a sunset sandstorm. A lone adult female commander in dark lamellar "
+            "armor and a torn crimson cloak faces the same mountain fortress and its burning beacon. Use wind-driven "
+            "fabric, practical firelight, readable clues and urgent but grounded action. Preserve her face, armor, sword, "
+            "wall geography and screen direction. Do not copy an existing series, performer, franchise or character."
         ),
-        "beats": [
-            "The heroine advances beneath one continuous covered walkway while distant lantern light grows gradually brighter.",
-            "A gust carries fallen leaves across the same courtyard as she keeps the established pace and direction.",
-            "She notices a distant silhouette reflected in the river, without introducing a cut or changing location.",
-            "The camera eases sideways to reveal the connected moon gate while every architectural landmark stays in place.",
-            "She reaches the riverside steps and draws one controlled breath; her costume and sword remain unchanged.",
-            "Dawn light spreads along the same palace roofline as the uninterrupted journey continues toward the next chapter.",
-        ],
     },
     "custom_channel": {
         "name": "自定义频道",
@@ -183,14 +189,6 @@ PRESETS: Dict[str, Dict[str, Any]] = {
             "world. Treat the creator's channel description as the binding art direction. Preserve subject identity, "
             "geography, lighting logic, camera language and motion continuity instead of resetting the program each segment."
         ),
-        "beats": [
-            "Establish the creator-defined program with one clear subject, readable environment and a path that can continue.",
-            "Continue the same physical action and reveal one connected layer of the creator-defined world.",
-            "Let a controlled lighting or environmental change deepen the program without changing its identity.",
-            "Use gentle parallax to reveal more of the same location while preserving every established spatial relationship.",
-            "Advance toward one visible destination without replaying an earlier event or adding a new main subject.",
-            "Reach a stable visual beat that remains open for the next uninterrupted chapter.",
-        ],
     },
 }
 
@@ -201,31 +199,6 @@ LEGACY_PRESET_ALIASES = {
     "mechanical_loop": "travel_aerial",
 }
 
-
-BEATS = [
-    "The path advances gently and reveals a slightly wider layer of the same world.",
-    "The camera passes one foreground detail while the subject continues at exactly the same pace.",
-    "A soft change in light travels across the existing scene without changing location abruptly.",
-    "The subject curves naturally around one environmental feature; motion remains slow and readable.",
-    "The camera draws a little closer to tactile details, then resumes the same forward path.",
-    "A deeper vista opens ahead while all palette, weather and material rules remain unchanged.",
-    "The environment becomes subtly more magical through particles and light, not through a scene cut.",
-    "The subject crosses a small threshold that physically belongs to the current location.",
-    "The camera eases sideways for gentle parallax, then returns behind the subject.",
-    "A calm visual payoff appears in the distance and grows gradually as the journey continues.",
-]
-
-# These beats deliberately avoid naming a new landmark. A continuation request
-# only receives one still frame, so asking it to introduce a specific foreground
-# object can cause that object to be teleported into the subject's path.
-CONTINUATION_BEATS = [
-    "Let every landmark already visible keep its current side and depth order while it recedes naturally; keep the route ahead unobstructed.",
-    "Continue the same readable path and speed; a compatible distant detail may become slightly clearer but must remain in the background.",
-    "Allow only a gradual lighting change across the existing world; do not add, repeat or relocate a major structure.",
-    "Use a very gentle camera ease to reveal more of the physically connected route while keeping the subject's path clear.",
-    "Let the existing distant destination grow gradually through forward motion, without a cut, reset or sudden scale jump.",
-    "Continue through open space with the same horizon and screen direction; previously passed landmarks must remain behind.",
-]
 
 
 def utc_now() -> str:
@@ -415,33 +388,45 @@ def is_within(path: Path, root: Path) -> bool:
         return False
 
 
-def build_prompt(config: Dict[str, Any], clip_index: int, has_start_frame: bool) -> str:
+def build_prompt(config: Dict[str, Any], clip_index: int, has_start_frame: bool,
+                 scene_plan: Optional[Dict[str, Any]] = None) -> str:
+    if scene_plan is None:
+        raise StoryPlanError("每一幕都需要实时编写的新剧情，不能退回固定分镜")
     preset = PRESETS[config["preset"]]
     duration_mode = config.get("duration_mode", "fixed")
     total = config.get("total_clips")
     concept = config.get("concept", "").strip()
     subject = config.get("subject_lock", "").strip() or preset["subject"]
-    scene = config.get("scene_setting", "").strip()
-    story_action = config.get("story_action", "").strip()
-    camera = config.get("camera_direction", "").strip()
-    exclusions = config.get("avoid_content", "").strip()
+    scene = config.get("scene_setting", "").strip() or preset.get("scene_setting", "")
+    story_action = config.get("story_action", "").strip() or preset.get("story_action", "")
+    camera = config.get("camera_direction", "").strip() or preset.get("camera_direction", "")
+    exclusions = config.get("avoid_content", "").strip() or preset.get("avoid_content", "")
     custom_channel_style = config.get("custom_channel_style", "").strip()
     is_continuation = clip_index > 0
-    preset_beats = preset.get("beats") or BEATS
-    if is_continuation:
-        beat = CONTINUATION_BEATS[(clip_index - 1) % len(CONTINUATION_BEATS)]
-    else:
-        beat = preset_beats[0]
+    is_meadow_story = preset.get("revision") == "windmeadow-v1"
+    schedule = config.get("clip_schedule") or []
+    seconds = schedule[clip_index] if clip_index < len(schedule) else config.get("clip_duration", 10)
+    seam_bridge_seconds = min(1.0, float(seconds) / 5)
+    final_scene = duration_mode == "fixed" and clip_index == int(total or 0) - 1
+    beat = scene_video_instruction(scene_plan, final_scene=final_scene)
     aspect_ratio = config.get("aspect_ratio", "9:16")
     orientation = "portrait" if aspect_ratio == "9:16" else "landscape"
-    if is_continuation:
+    if is_continuation and is_meadow_story:
+        intro = (
+            "Picture 1 is the exact first frame of this continuation and the only verified current story state. "
+            "Continue directly from it with no cut, reset, jump in camera position or reinterpretation. Preserve its "
+            "actual character poses, gaze, screen sides, depth order, prop possession, hat location and motion before "
+            "causally advancing the next event. "
+        )
+    elif is_continuation:
         intro = (
             "Picture 1 is the exact first frame of this continuation, not a new scene to reinterpret. "
             "Continue directly from it with no cut, no reset, no jump in camera position, and no change of lens, "
-            "time of day, weather or art direction. During 00:00-00:04, continue only the motion implied by Picture 1: "
+            f"time of day, weather or art direction. During only the first {seam_bridge_seconds:g} second(s), "
+            "continue the motion implied by Picture 1, then begin the next clearly different story event: "
             "preserve every visible object's screen side, depth order, relative scale and orientation; keep the camera "
-            "moving in the established direction with a level horizon. Do not introduce a new event during these first "
-            "four seconds. After 00:04, any change must emerge gradually in the distant background. "
+            "moving in the established direction with a level horizon. The new event must grow causally from what is "
+            "already visible rather than appearing through a cut, teleport or unexplained reset. "
         )
     elif has_start_frame:
         intro = (
@@ -461,14 +446,7 @@ def build_prompt(config: Dict[str, Any], clip_index: int, has_start_frame: bool)
             custom_parts.append(f"CAMERA LOCK: {camera}.")
         if exclusions:
             custom_parts.append(f"CREATOR EXCLUSIONS: {exclusions}.")
-        if story_action and not is_continuation:
-            custom_parts.append(
-                f"FIRST-SEGMENT ACTION ONLY: {story_action}. Do not rush to complete the whole journey."
-            )
-        elif is_continuation:
-            custom_parts.append(
-                "Do not restart or replay any earlier story event; continue only the state visible in Picture 1."
-            )
+        custom_parts.append("Do not restart or replay any earlier story event; the supplied new scene is the action to render.")
         custom = " ".join(custom_parts) + " "
     else:
         custom = f"Creator's concept: {concept}. " if concept and not is_continuation else ""
@@ -479,17 +457,33 @@ def build_prompt(config: Dict[str, Any], clip_index: int, has_start_frame: bool)
         if duration_mode == "unlimited"
         else f"Segment {clip_index + 1} of {total}"
     )
+    pacing_rule = (
+        "STORY PROGRESSION: every segment must contain a visibly different action or emotional beat and must change "
+        "the main action, immediate stakes, emotion or prop/environment state in an unmistakable way. Preserve identity "
+        "and geography, but do not merely extend the same movement, "
+        "camera drift, ambient particles or lighting like a screensaver. Build large dramatic rises and falls through "
+        "cause, surprise, setback, effort, reversal and payoff. Show the physical transition into the new event; never "
+        "sacrifice continuity just to make the image different. "
+    )
+    ending_rule = (
+        "End on the new story state in a stable, unobstructed handoff pose; clearly preserve faces, paws, hands and "
+        "the hat's actual location so the next scene can continue it. "
+        if is_meadow_story
+        else "End in a stable, unobstructed pose while motion is still continuing smoothly so the final frame can "
+        "become the next shot's opening frame. "
+    )
+    if final_scene:
+        ending_rule = "Conclude the current event naturally with a stable, readable final pose; do not restart the story. "
     return (
         f"{intro}{preset['base']} {custom}IDENTITY LOCK: {subject}. "
         f"{segment_label}: {beat} "
         "CONTINUITY RULES: one continuous take; preserve the exact subject identity, costume/materials, scale, "
-        "screen direction, camera height, lens character, color palette and ambient sound bed. Keep motion slow "
-        "and causal. Maintain a collision-free path: never pass through solid geometry, never let a foreground "
+        f"screen direction, camera height, lens character, color palette and ambient sound bed. {pacing_rule}"
+        "Maintain a collision-free path: never pass through solid geometry, never let a foreground "
         "structure cross or cover the main subject, never teleport a landmark from behind to ahead, and never use "
         "fog, clouds, glare or motion blur to conceal a position reset. Do not introduce a new main character. "
         "No hard cut, montage, flash frame, title, subtitle, logo, UI, watermark, distorted hands, sudden close-up "
-        "or rapid camera whip. End in a stable, unobstructed pose while motion is still "
-        f"continuing smoothly so the final frame can become the next shot's opening frame. Format: {orientation} {aspect_ratio}."
+        f"or rapid camera whip. {ending_rule}Format: {orientation} {aspect_ratio}."
     )
 
 
@@ -551,7 +545,8 @@ def validate_start_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         else:
             clip_schedule = build_clip_schedule(duration_seconds, clip_duration)
         total_clips: Optional[int] = len(clip_schedule)
-        estimated: Optional[float] = estimate_cost_usd(duration_seconds, resolution)
+        estimated: Optional[float] = round(estimate_cost_usd(duration_seconds, resolution)
+                                          + total_clips * DIRECTOR_SCENE_ALLOWANCE_USD, 2)
     else:
         clip_schedule = []
         total_clips = None
@@ -581,7 +576,7 @@ def validate_start_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     if estimated is not None and max_budget < estimated:
         raise ValueError(f"本地预计费用上限不足：按内置标准费率计算需要 ${estimated:.2f}")
     if duration_mode == "unlimited":
-        first_segment_cost = estimate_cost_usd(clip_duration, resolution)
+        first_segment_cost = estimate_cost_usd(clip_duration, resolution) + DIRECTOR_SCENE_ALLOWANCE_USD
         if max_budget + 0.001 < first_segment_cost:
             raise ValueError(
                 f"不限时长模式的预算至少需要覆盖一幕：${first_segment_cost:.2f}"
@@ -618,11 +613,22 @@ def validate_start_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
         "paid_confirmed": paid_confirmed,
         "api_key": api_key,
         "playback_mode": "live_buffer",
+        "story_mode": "improvised",
+        "director_scene_allowance_usd": DIRECTOR_SCENE_ALLOWANCE_USD,
         "pricing_basis": "fal_standard_public_rate_guard",
     }
     if preset == "custom_channel":
         config["custom_channel_name"] = custom_channel_name
         config["custom_channel_style"] = custom_channel_style
+    elif PRESETS[preset].get("revision"):
+        # Versioned, server-owned art direction keeps stale browser drafts from
+        # mixing a former scene with the current built-in reference frame. The
+        # server is authoritative even when an older cached browser sends no revision.
+        profile = PRESETS[preset]
+        config["preset_revision"] = profile["revision"]
+        config["subject_lock"] = profile["subject"]
+        for field in ("scene_setting", "story_action", "camera_direction", "avoid_content"):
+            config[field] = profile[field]
     return config
 
 
@@ -1173,10 +1179,42 @@ def data_uri(path: Path) -> str:
     return f"data:image/jpeg;base64,{encoded}"
 
 
+def preset_start_image(config: Dict[str, Any]) -> Optional[str]:
+    """Only resolve a versioned, built-in frame; never a caller-supplied path."""
+    preset = PRESETS[config["preset"]]
+    if not preset.get("revision") or config.get("preset_revision") != preset["revision"]:
+        return None
+    filename = preset.get("reference_frames", {}).get(config["aspect_ratio"])
+    if not filename:
+        return None
+    path = WEB_ROOT / "assets" / filename
+    if not path.is_file():
+        raise RuntimeError("预设频道首帧缺失，请确认新版素材已完整下载；尚未提交生成")
+    if path.stat().st_size > 12 * 1024 * 1024:
+        raise RuntimeError("预设频道首帧文件过大；尚未提交生成")
+    mime = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+    }.get(path.suffix.lower())
+    if not mime:
+        raise RuntimeError("预设频道首帧格式不受支持；尚未提交生成")
+    image = f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    validate_start_image(image, config["aspect_ratio"])
+    return image
+
+
 def public_error_message(error: str) -> str:
     if not error:
         return ""
     lowered = error.lower()
+    if "剧情" in error:
+        if any(word in error for word in ("格式", "字段", "标记", "无效内容")):
+            return "AI 剧情返回格式未通过校验，请刷新页面后重新开播。"
+        if any(word in error for word in ("重复", "相似", "变化不足")):
+            return "AI 暂未构思出符合要求的新剧情，请重新开播。"
+        return "AI 剧情续写暂未完成，请刷新页面后重新开播。"
     if "本地环境" in error:
         return "本地环境未就绪：请运行 doctor.command 检查媒体工具和目录权限；本次未提交付费生成"
     if "512mb" in lowered or "下载的视频文件过小" in error:
@@ -1209,6 +1247,8 @@ class SessionState:
     generated_seconds: int = 0
     submitted_seconds: int = 0
     spent_estimate_usd: float = 0.0
+    director_spent_usd: float = 0.0
+    story_history: List[Dict[str, Any]] = field(default_factory=list, repr=False)
     active_request_id: str = field(default="", repr=False)
     active_cancel_url: str = field(default="", repr=False)
     cancel_attempted_request_id: str = field(default="", repr=False)
@@ -1238,10 +1278,13 @@ class SessionState:
                 "aspect_ratio",
                 "preset",
                 "preset_name",
+                "preset_revision",
                 "custom_channel_name",
                 "estimated_cost_usd",
                 "max_budget_usd",
                 "playback_mode",
+                "story_mode",
+                "director_scene_allowance_usd",
             }
             config = {key: self.config[key] for key in config_keys if key in self.config}
             public_clips = [
@@ -1250,6 +1293,7 @@ class SessionState:
                     "number": clip["number"],
                     "url": clip["url"],
                     "duration": clip["duration"],
+                    "story_title": clip.get("story_title", ""),
                     "generation_seconds": clip.get("generation_seconds"),
                     "generation_time_seconds": clip.get("generation_time_seconds"),
                     "generation_time_source": clip.get("generation_time_source", ""),
@@ -1339,7 +1383,7 @@ class SessionState:
                     "节目已结束；请播放检查动作与空间逻辑"
                     if self.status == "complete"
                     else (
-                        f"第 {len(self.clips) + 1} 幕将先保持当前运动，再逐步展开远景"
+                        f"第 {len(self.clips) + 1} 幕正在即兴构思"
                         if duration_mode == "unlimited" or remaining_clips
                         else "所有画面已生成；请播放检查动作与空间逻辑"
                     )
@@ -1358,6 +1402,10 @@ class SessionState:
         # so they cannot contend for the shared manifest.json.tmp path.
         with self.lock:
             payload = self.public()
+            payload["_story_history"] = self.story_history
+            payload["_director_spent_usd"] = self.director_spent_usd
+            if "剧情" in self.error:
+                payload["_story_error_detail"] = self.error[:2000]
             if self.client_request_hash:
                 payload["_client_request_hash"] = self.client_request_hash
             atomic_json(self.directory / "manifest.json", payload)
@@ -1561,6 +1609,100 @@ def finalize_completed_session(session: SessionState, completion_reason: str) ->
     session.persist()
 
 
+class StoryBudgetReached(StoryPlanError):
+    pass
+
+
+def session_cost(session: SessionState, extra_seconds: int = 0) -> float:
+    return estimate_cost_usd(session.submitted_seconds + extra_seconds,
+                             session.config["resolution"]) + session.director_spent_usd
+
+
+def plan_scene(session: SessionState, index: int, seconds: int,
+               current_image: Optional[str]) -> Dict[str, Any]:
+    preset = PRESETS[session.config["preset"]]
+    world = {"art_direction": preset["base"],
+             "subject": session.config.get("subject_lock") or preset["subject"],
+             "setting": session.config.get("scene_setting") or preset.get("scene_setting", ""),
+             "camera": session.config.get("camera_direction") or preset.get("camera_direction", ""),
+             "exclusions": session.config.get("avoid_content") or preset.get("avoid_content", ""),
+             "genre": preset.get("story_action", "")}
+    if session.config["preset"] == "custom_channel":
+        world["creator_preferences"] = session.config.get("concept", "")
+        world["creator_story_preferences"] = session.config.get("story_action", "")
+        world["art_direction"] += " " + session.config.get("custom_channel_style", "")
+    images = []
+    if index:
+        for position in ("first", "middle"):
+            path = session.directory / f"clip-{index:03d}-{position}.jpg"
+            if path.is_file():
+                images.append(data_uri(path))
+    if current_image:
+        images.append(current_image)
+    remaining = (session.config["duration_seconds"] - session.generated_seconds
+                 if session.config["duration_mode"] == "fixed" else None)
+    rejection, rejected_plan, rejection_kind = "", {}, ""
+    for attempt in range(DIRECTOR_MAX_ATTEMPTS):
+        if session.stop_event.is_set() or SHUTTING_DOWN.is_set():
+            raise RuntimeError("任务已由用户停止")
+        arguments = build_director_arguments(world, seconds, index + 1,
+            session.story_history, images, rejection, rejected_plan, remaining, rejection_kind)
+        with session.lock:
+            if session_cost(session, seconds) + DIRECTOR_ATTEMPT_ALLOWANCE_USD > session.config["max_budget_usd"] + 0.000001:
+                raise StoryBudgetReached("剩余预算不足以续写并生成下一幕")
+            session.message = f"AI 正在构思第 {index + 1} 幕的新剧情"
+            session.active_queue_state = "STORY_PLANNING"
+            # Reserve before the POST: a lost response may still be billable.
+            session.director_spent_usd += DIRECTOR_ATTEMPT_ALLOWANCE_USD
+            session.spent_estimate_usd = session_cost(session)
+        session.persist()
+
+        def progress(state: str, request_id: str, cancel_url: str) -> None:
+            with session.lock:
+                if session.active_request_id != request_id:
+                    session.cancel_attempted_request_id = ""
+                session.active_request_id = request_id
+                session.active_cancel_url = cancel_url
+                session.active_queue_state = "STORY_PLANNING"
+            if state == "SUBMITTED":
+                session.persist()
+                if session.stop_event.is_set():
+                    cancel_active_fal_request(session)
+
+        try:
+            result, _request_id, _elapsed, _timing = fal_generate(
+                DIRECTOR_ENDPOINT, arguments, session.api_key, session.stop_event, progress)
+        finally:
+            arguments.pop("image_urls", None)
+        payload = result.get("data", result)
+        reported_cost = safe_float((payload.get("usage") or {}).get("cost"), float("nan"))
+        with session.lock:
+            if math.isfinite(reported_cost) and reported_cost >= 0:
+                session.director_spent_usd = max(0, session.director_spent_usd
+                    - DIRECTOR_ATTEMPT_ALLOWANCE_USD + reported_cost)
+            session.spent_estimate_usd = session_cost(session)
+            session.active_request_id = ""
+            session.active_cancel_url = ""
+            session.cancel_attempted_request_id = ""
+        session.persist()
+        try:
+            plan = parse_scene_plan(result, session.story_history)
+        except StoryPlanError as error:
+            rejection = str(error)
+            rejection_kind = error.category
+            rejected_plan = error.candidate
+            atomic_json(session.directory / f"story-{index + 1:03d}-rejected-{attempt + 1}.json",
+                        {"reason": rejection, "category": rejection_kind,
+                         "candidate": {"previous_output": str(payload.get("output", ""))[:8000]},
+                         "model": DIRECTOR_MODEL})
+            continue
+        atomic_json(session.directory / f"story-{index + 1:03d}.json",
+                    {"model": DIRECTOR_MODEL, "scene": index + 1,
+                     "status": "planned_not_yet_rendered", "plan": plan})
+        return plan
+    raise StoryPlanError(f"剧情续写未通过检查：{rejection}；已停止生成并保留现有片段")
+
+
 def run_session(session: SessionState) -> None:
     previous_last: Optional[Path] = None
     with session.lock:
@@ -1575,6 +1717,8 @@ def run_session(session: SessionState) -> None:
             session.message = "正在检查本地媒体工具；尚未提交付费生成"
         session.persist()
         prepare_media_tools()
+        if not previous_data_uri:
+            previous_data_uri = preset_start_image(session.config)
         with session.lock:
             session.status = "generating"
             session.message = "AI 正在写下第一幕"
@@ -1606,17 +1750,20 @@ def run_session(session: SessionState) -> None:
                     termination_reason = "budget_guard_reached"
                     break
 
-            prompt = build_prompt(session.config, index, previous_data_uri is not None)
+            try:
+                scene_plan = plan_scene(session, index, segment_duration, previous_data_uri)
+            except StoryBudgetReached:
+                termination_reason = "budget_guard_reached"
+                break
+            prompt = build_prompt(session.config, index, previous_data_uri is not None, scene_plan)
+            story_title = scene_plan["title"]
             clip_filename = f"clip-{index + 1:03d}.mp4"
             clip_path = session.directory / clip_filename
             first_frame = session.directory / f"clip-{index + 1:03d}-first.jpg"
             last_frame = session.directory / f"clip-{index + 1:03d}-last.jpg"
 
             with session.lock:
-                projected_cost = estimate_cost_usd(
-                    session.submitted_seconds + segment_duration,
-                    session.config["resolution"],
-                )
+                projected_cost = session_cost(session, segment_duration)
                 if projected_cost > session.config["max_budget_usd"] + 0.001:
                     if duration_mode == "unlimited":
                         termination_reason = "budget_guard_reached"
@@ -1632,6 +1779,8 @@ def run_session(session: SessionState) -> None:
                         session.message = (
                             f"AI 正在续写第 {index + 1}/{session.config['total_clips']} 幕"
                         )
+                    if story_title:
+                        session.message += f" · {story_title}"
                     session.active_queue_state = "PREPARING"
             if termination_reason:
                 break
@@ -1641,6 +1790,10 @@ def run_session(session: SessionState) -> None:
                 termination_reason = "user_stopped"
                 break
 
+            atomic_json(session.directory / f"prompt-{index + 1:03d}.json",
+                        {"scene": index + 1, "prompt": prompt, "duration": segment_duration,
+                         "reference": f"clip-{index:03d}-last.jpg" if index else "opening-frame",
+                         "status": "prepared_for_submission"})
             if previous_data_uri:
                 endpoint = "minimax/h3-max/image-to-video"
                 arguments: Dict[str, Any] = {
@@ -1680,9 +1833,7 @@ def run_session(session: SessionState) -> None:
                         "COMPLETED",
                     }:
                         session.submitted_seconds += segment_duration
-                        session.spent_estimate_usd = estimate_cost_usd(
-                            session.submitted_seconds, session.config["resolution"]
-                        )
+                        session.spent_estimate_usd = session_cost(session)
                         submission_counted = True
                     session.active_queue_state = state
                     session.active_request_id = active_request
@@ -1720,6 +1871,7 @@ def run_session(session: SessionState) -> None:
                 aspect_ratio=session.config["aspect_ratio"],
             )
             extract_frame(clip_path, first_frame, "first")
+            extract_frame(clip_path, session.directory / f"clip-{index + 1:03d}-middle.jpg", "middle")
             extract_frame(clip_path, last_frame, "last")
             similarity = None
             if previous_last is not None:
@@ -1733,6 +1885,7 @@ def run_session(session: SessionState) -> None:
                 "filename": clip_filename,
                 "url": f"/media/{session.session_id}/{clip_filename}",
                 "duration": segment_duration,
+                "story_title": story_title,
                 "generation_seconds": generation_seconds,
                 "generation_time_seconds": generation_timing.get("seconds"),
                 "generation_time_source": generation_timing.get("source", "unavailable"),
@@ -1750,6 +1903,9 @@ def run_session(session: SessionState) -> None:
             }
             with session.lock:
                 session.clips.append(clip)
+                session.story_history.append(dict(scene_plan, scene=index + 1,
+                    observation_source="sampled_frames_model_report",
+                    render_status="generated_not_semantically_verified"))
                 session.generated_seconds += segment_duration
                 session.active_request_id = ""
                 session.active_cancel_url = ""
@@ -2296,8 +2452,10 @@ def restore_manifests() -> None:
                 generated_seconds=payload.get("generated_seconds", 0),
                 submitted_seconds=payload.get("submitted_seconds", payload.get("generated_seconds", 0)),
                 spent_estimate_usd=payload.get("spent_estimate_usd", 0),
+                director_spent_usd=payload.get("_director_spent_usd", 0),
+                story_history=payload.get("_story_history", []),
                 active_queue_state=payload.get("active_queue_state", ""),
-                error=payload.get("error", ""),
+                error=payload.get("_story_error_detail", payload.get("error", "")),
                 completion_reason=payload.get(
                     "completion_reason",
                     "target_reached" if payload.get("status") == "complete" else "",

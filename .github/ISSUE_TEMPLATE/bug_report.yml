@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: 软件版本 / FrameCurrent version
-      placeholder: "例如 1.6.2，或 commit SHA"
+      placeholder: "例如 1.7.1，或 commit SHA"
     validations:
       required: true
   - type: input

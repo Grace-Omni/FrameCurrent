@@ -13,8 +13,8 @@ enum FrameToolError: Error, CustomStringConvertible {
 }
 
 func extract(videoPath: String, outputPath: String, position: String) throws {
-    guard position == "first" || position == "last" else {
-        throw FrameToolError.message("position must be 'first' or 'last'")
+    guard ["first", "middle", "last"].contains(position) else {
+        throw FrameToolError.message("position must be 'first', 'middle' or 'last'")
     }
     let videoURL = URL(fileURLWithPath: videoPath)
     guard FileManager.default.fileExists(atPath: videoURL.path) else {
@@ -36,6 +36,11 @@ func extract(videoPath: String, outputPath: String, position: String) throws {
     let requestedTime: CMTime
     if position == "first" {
         requestedTime = .zero
+    } else if position == "middle" {
+        let frameCount = max(0, Int64((duration.seconds / 2 * 24).rounded(.down)))
+        requestedTime = CMTime(value: frameCount, timescale: 24)
+        generator.requestedTimeToleranceBefore = frameStep
+        generator.requestedTimeToleranceAfter = frameStep
     } else {
         let candidate = CMTimeSubtract(duration, frameStep)
         requestedTime = CMTimeCompare(candidate, .zero) > 0 ? candidate : .zero
@@ -63,7 +68,7 @@ func extract(videoPath: String, outputPath: String, position: String) throws {
 do {
     let arguments = CommandLine.arguments
     guard arguments.count == 4 else {
-        throw FrameToolError.message("usage: extract_frame INPUT.mp4 OUTPUT.jpg first|last")
+        throw FrameToolError.message("usage: extract_frame INPUT.mp4 OUTPUT.jpg first|middle|last")
     }
     try extract(videoPath: arguments[1], outputPath: arguments[2], position: arguments[3])
 } catch {

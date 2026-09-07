@@ -8,7 +8,7 @@
   <meta name="description" content="连续影像 FrameCurrent：以电视频道的方式持续生成、预览并导出连贯视频。">
   <meta name="theme-color" content="#080a09">
   <link rel="icon" href="/assets/logo-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=1.7.1-preview-1">
 </head>
 <body data-visual-preset="hand_drawn_fantasy">
   <div class="ambient ambient-one"></div>
@@ -35,7 +35,7 @@
       <div>
         <p class="eyebrow">FRAMECURRENT · CONTINUOUS GENERATIVE CINEMA</p>
         <h1>换一个频道，<em>让画面继续生长。</em></h1>
-        <p class="hero-copy">选一个频道，让短片逐幕延续，最后下载一条完整视频。生成需要等待，缓存不足时会暂停预览；它不是实时直播。</p>
+        <p class="hero-copy">一座由 AI 即兴演绎的电视台。选择频道，看新的画面与故事接连发生，也能保存属于你的这一期节目。</p>
       </div>
       <div class="station-ident" aria-label="电视台状态">
         <span>SELECTED CHANNEL</span>
@@ -51,14 +51,14 @@
       </div>
       <input id="preset" name="preset" type="hidden" value="hand_drawn_fantasy">
       <div class="channel-strip" id="presetGrid" role="group" aria-label="连续影像频道">
-        <button class="channel-card fantasy selected" type="button" data-preset="hand_drawn_fantasy" aria-pressed="true"><span class="channel-number">CH 01</span><span class="channel-copy"><b>日系手绘奇幻</b><small>天空岛 · 飞行冒险</small></span></button>
-        <button class="channel-card scifi" type="button" data-preset="cinematic_scifi" aria-pressed="false"><span class="channel-number">CH 02</span><span class="channel-copy"><b>科幻史诗电影</b><small>轨道巨构 · 深空航行</small></span></button>
-        <button class="channel-card variety" type="button" data-preset="studio_variety" aria-pressed="false"><span class="channel-number">CH 03</span><span class="channel-copy"><b>高能棚内综艺</b><small>LED舞台 · 追光现场</small></span></button>
-        <button class="channel-card aerial" type="button" data-preset="travel_aerial" aria-pressed="false"><span class="channel-number">CH 04</span><span class="channel-copy"><b>旅行电影航拍</b><small>雪山列车 · 海岸日出</small></span></button>
-        <button class="channel-card costume" type="button" data-preset="costume_drama" aria-pressed="false"><span class="channel-number">CH 05</span><span class="channel-copy"><b>AI古装短剧</b><small>月下宫城 · 江湖悬念</small></span></button>
+        <button class="channel-card fantasy selected" type="button" data-preset="hand_drawn_fantasy" aria-pressed="true"><span class="channel-number">CH 01</span><span class="channel-copy"><b>日系手绘奇幻</b><small>风过花野 · 夏日治愈</small></span></button>
+        <button class="channel-card scifi" type="button" data-preset="cinematic_scifi" aria-pressed="false"><span class="channel-number">CH 02</span><span class="channel-copy"><b>科幻史诗电影</b><small>四季晶体 · 时间峡谷</small></span></button>
+        <button class="channel-card variety" type="button" data-preset="studio_variety" aria-pressed="false"><span class="channel-number">CH 03</span><span class="channel-copy"><b>高能棚内综艺</b><small>机械月面 · 高音开幕</small></span></button>
+        <button class="channel-card aerial" type="button" data-preset="travel_aerial" aria-pressed="false"><span class="channel-number">CH 04</span><span class="channel-copy"><b>旅行电影航拍</b><small>火山山脊 · 风暴穿越</small></span></button>
+        <button class="channel-card costume" type="button" data-preset="costume_drama" aria-pressed="false"><span class="channel-number">CH 05</span><span class="channel-copy"><b>AI古装短剧</b><small>边关烽火 · 密令反转</small></span></button>
         <button class="channel-card custom" type="button" data-preset="custom_channel" aria-pressed="false"><span class="channel-number">CH ＋</span><span class="channel-copy"><b>自定义频道</b><small>创建你的专属节目</small></span></button>
       </div>
-      <div class="channel-description"><span id="presetHint">原创日系手绘动画质感；天空岛、强风与云海形成鲜明层次，建议16:9。</span><small class="preset-behavior">频道图为风格示意。换台不收费，也不会停止正在生成的节目。</small></div>
+      <div class="channel-description"><span id="presetHint">日系手绘与夏日奇幻。小女孩和橘白猫的故事，由 AI 此刻展开。</span><small class="preset-behavior">AI 即兴演绎 · 每次开播，全新故事</small></div>
     </section>
 
     <section class="panel setup-panel">
@@ -91,7 +91,7 @@
             </div>
             <p class="setting-help" id="durationHelp">00:30 · 预计拆分为3幕连续生成</p>
           </div>
-          <div class="unlimited-note" id="unlimitedDurationNote" hidden><b>持续播出，手动停播</b><p>频道会逐幕生成，达到本地预计费用上限时自动收台并合并已完成节目。</p></div>
+          <div class="unlimited-note" id="unlimitedDurationNote" hidden><b>故事继续，随时停播</b><p>AI 根据正在发生的画面即兴续写，新的发现、意外与转折接连展开。</p></div>
         </div>
 
         <fieldset class="ratio-builder">
@@ -116,7 +116,7 @@
       <form class="panel config-panel" id="configForm" data-preset-theme="hand_drawn_fantasy" data-channel-kind="preset">
         <div class="section-heading compact">
           <div><span class="step">开播台</span><h2 id="selectedChannelName">日系手绘奇幻</h2></div>
-          <p id="controlModeCopy">节目内容已经预设，只需确认生成参数。</p>
+          <p id="controlModeCopy">频道风格已就绪，AI 将即兴生成节目。</p>
         </div>
 
         <section class="custom-program-settings" id="customProgramSettings" hidden>
@@ -132,26 +132,26 @@
 
           <label class="field full">
             <span>固定主角或主体</span>
-            <input id="subjectLock" maxlength="800" value="一架红色复古单翼滑翔机，驾驶舱内的成年短发女飞行员始终穿芥末黄斗篷、背红色邮差包并戴圆形护目镜" placeholder="例如：一架红色复古滑翔机和一位黄斗篷女飞行员">
+            <input id="subjectLock" maxlength="800" value="" placeholder="例如：一个戴草帽、穿奶油黄夏裙的小孩，自然儿童比例，全身可见">
             <small>写清外形、材质和颜色，AI 会在每一幕重复这些特征。</small>
           </label>
 
           <label class="field full">
             <span>固定世界</span>
-            <input id="sceneSetting" maxlength="800" value="漂浮在云海之上的手绘天空群岛，巨型风车、绿色草坡、瀑布和金色黄昏始终统一" placeholder="例如：漂浮在云海之上的天空群岛与巨型风车">
+            <input id="sceneSetting" maxlength="800" value="" placeholder="例如：晴朗夏日上午的青绿花草地，雏菊、远处小屋与奶油白积云">
             <small>只设定一个主要空间；材质、天气和时间越明确，长片越不容易突然换景。</small>
           </label>
 
           <label class="field full">
             <span>节目持续发生什么？ <i>用一句话即可</i></span>
-            <textarea id="concept" maxlength="1200" rows="3" placeholder="例如：滑翔机沿开阔航线稳定前飞，风车从左侧后退，远处天空鲸缓慢变大">滑翔机沿天空岛外侧的开阔航线稳定前飞，既有风车始终从左侧安全距离后退，远处天空鲸只缓慢变大</textarea>
+            <textarea id="concept" maxlength="1200" rows="3" placeholder="例如：孩子沿低草小径朝右轻快小跑，双脚真实落地，裙摆随风轻摆"></textarea>
             <small>只描述一条可持续的运动路线；不要写“先做A、再做B、最后做C”的多段剧情。</small>
           </label>
 
           <label class="field full">
             <span>镜头怎么跟随？</span>
             <select id="cameraMotion">
-              <option value="电影感侧后方跟拍，低空平稳飞行，缓慢拉远揭示天空岛">动画飞行跟拍 · 推荐</option>
+              <option value="儿童视线略高的中远景平行跟拍，女孩通常全身可见、约占画面高度四分之一，脚下留出草地；镜头随追逐、减速、跪下与互动平缓调整，地平线水平，不突然推近、不环绕、不升空">草地剧情跟拍 · 治愈动画</option>
               <option value="超宽银幕低机位跟拍，镜头缓慢抬升揭示轨道巨构尺度">科幻巨构揭示</option>
               <option value="稳定的广播摇臂机位，围绕舞台中心平滑半环绕并轻微推近">综艺摇臂环绕</option>
               <option value="稳定无人机贴近主体前进并缓慢升高，始终保持地平线水平">航拍升高揭示</option>
@@ -168,14 +168,14 @@
             <div class="advanced-body">
               <label class="field full">
                 <span>不希望出现什么？</span>
-                <input id="avoidContent" maxlength="500" value="不要写实真人质感、不要现有动画角色、不要文字Logo、不要突然变成3D塑料材质" placeholder="例如：不要突然出现人物、文字、Logo或快速镜头">
+                <input id="avoidContent" maxlength="500" value="" placeholder="例如：不要突然出现人物、文字、Logo或快速镜头">
               </label>
             </div>
           </details>
 
           <div class="brief-summary" aria-live="polite">
             <span>频道识别锁定</span>
-            <p id="briefSummary">红色复古滑翔机与黄斗篷女飞行员 · 手绘天空群岛 · 动画飞行跟拍 · 横屏16:9</p>
+            <p id="briefSummary">草帽小孩与橘白猫 · 风过花野 · 草地平行跟拍 · 横屏16:9</p>
           </div>
 
           <label class="upload-field full" for="startImage">
@@ -189,10 +189,10 @@
 
         <div class="field-group launch-options">
           <label class="field">
-            <span>画面清晰度</span>
+            <span>生成分辨率</span>
             <select id="resolution">
-              <option value="480P" selected>480P · 更省费用</option>
-              <option value="768P">768P · 更清晰</option>
+              <option value="480P" selected>480P · 经济档</option>
+              <option value="768P">768P · 高清档（fal默认）</option>
             </select>
           </label>
           <label class="field">
@@ -232,12 +232,12 @@
         </div>
 
         <div class="live-stage" id="liveStage">
-          <video id="previewA" playsinline muted preload="auto"></video>
-          <video id="previewB" playsinline muted preload="auto"></video>
+          <video id="previewA" playsinline muted preload="none"></video>
+          <video id="previewB" playsinline muted preload="none"></video>
+          <video id="presetShowcase" class="preset-showcase" data-src="/assets/animation-windmeadow-showcase-20s-v1.mp4" muted playsinline controls preload="none" aria-label="日系频道20秒实际生成示例"></video>
           <div class="stage-placeholder" id="stagePlaceholder">
-            <div class="chain-illustration"><i></i><i></i><i></i></div>
-            <h3>频道尚未开播</h3>
-            <p>完成开播设置后按“开播这个频道”。</p>
+            <h3></h3>
+            <p></p>
           </div>
           <div class="live-badge" id="liveBadge"><i></i><span>AI VIDEO</span></div>
           <div class="buffer-notice" id="bufferNotice" hidden>AI正在准备下一幕，画面会从这里继续</div>
@@ -246,6 +246,11 @@
             <span id="previewClip">节目第1幕</span>
             <span class="muted-label">预览已静音</span>
           </div>
+        </div>
+
+        <div class="preview-controls">
+          <span id="previewHint">仅播放已有视频，不启动生成</span>
+          <button class="preview-button" id="previewButton" type="button" aria-controls="liveStage" aria-pressed="false" disabled>预览示例</button>
         </div>
 
         <div class="live-content" id="liveContent">
@@ -305,7 +310,7 @@
 
   <footer class="site-footer shell">
     <a class="footer-brand" href="/" aria-label="返回连续影像首页"><img src="/assets/logo-mark.svg" alt=""><span><b>连续影像</b><small>FRAMECURRENT</small></span></a>
-    <span class="footer-version"><b>V1.6.2</b><small>MACOS LOCAL</small></span>
+    <span class="footer-version"><b>V1.7.1</b><small>MACOS LOCAL</small></span>
   </footer>
 
   <dialog class="paid-dialog" id="paidDialog" aria-labelledby="paidDialogTitle">
@@ -334,6 +339,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=1.7.1-preview-1" defer></script>
 </body>
 </html>

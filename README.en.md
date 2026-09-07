@@ -9,12 +9,12 @@
 <p align="center">
   <a href="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml"><img alt="Offline verification" src="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-c8ff62?style=flat-square&amp;labelColor=263026"></a>
-  <a href="CHANGELOG.md"><img alt="1.6.2 experimental" src="https://img.shields.io/badge/v1.6.2-experimental-ffb45e?style=flat-square&amp;labelColor=263026"></a>
+  <a href="CHANGELOG.md"><img alt="1.7.1 experimental" src="https://img.shields.io/badge/v1.7.1-experimental-ffb45e?style=flat-square&amp;labelColor=263026"></a>
 </p>
 
 FrameCurrent turns short AI generations into a continuous creation workflow. Pick a channel and an output length; the app generates successive clips, previews them as the buffer fills, and merges the finished programme into an MP4 you can use in your next edit.
 
-> **Before starting:** this is an experimental macOS app. Bring your own fal API Key and balance; generation costs real money after confirmation. Generation takes time, and motion or spatial continuity still needs a full playback review. The repository is currently private for invited reviewers.
+> **Before starting:** this is an experimental macOS app. Bring your own fal API Key and balance; generation costs real money after confirmation. Generation takes time, and motion or spatial continuity still needs a full playback review.
 
 <table>
 <tr>
@@ -26,23 +26,25 @@ FrameCurrent turns short AI generations into a continuous creation workflow. Pic
 
 ## The channels
 
-<img src="web/assets/channel-art-atlas.png" width="100%" alt="Concept artwork for fantasy animation, sci-fi, studio variety, aerial travel and Chinese costume-drama channels.">
-<sub>Channel concept artwork, not generated-video evidence or a quality guarantee.</sub>
+<img src="web/assets/animation-windmeadow-landscape-v1.png" width="100%" alt="Built-in landscape opening frame for the hand-drawn fantasy channel: a child and an orange-and-white cat in a summer meadow.">
+<sub>Built-in 16:9 opening artwork for Channel 01, not generated-video evidence or a quality guarantee.</sub>
 
 | Channel | A world to explore |
 | :--- | :--- |
-| **01 · Hand-drawn fantasy** | Red glider, floating islands, windmills and a sea of clouds |
-| **02 · Cinematic sci-fi** | Deep-space scout, eclipsed planet and orbital megastructures |
-| **03 · Studio variety** | A single host, circular stage and expressive LED lighting |
-| **04 · Aerial travel** | Scenic train, mountain peaks, lakes and coastline |
-| **05 · Chinese costume drama** | A heroine moving through a moonlit palace skyline |
+| **01 · Hand-drawn fantasy** | A summer meadow, a straw-hatted girl and an orange-and-white cat |
+| **02 · Cinematic sci-fi** | A time explorer, seasonal crystals and a stormy canyon |
+| **03 · Studio variety** | A singer, a giant mechanical moon and a black-and-red stage |
+| **04 · Aerial travel** | A hiker, a volcanic ridge, coastline and an emerald lake |
+| **05 · Chinese costume drama** | A commander, frontier walls, a sunset sandstorm and a beacon |
 | **＋ · Your own channel** | Your subject, setting, action, camera and visual direction |
 
-Presets fix the creative direction, not the exact output. The drama and variety channels are visual presets, rather than complete scripts, multi-person dialogue or programme planning.
+Channels define the visual style and starting world, not a prewritten episode. For every duration, AI improvises each scene from the previous images, with consequential events and reversals; fixed-length programmes receive a closing-time constraint. Multi-person dialogue and full programme production are not provided.
 
 ## Inside the app
 
 Channel selection, output settings, a player and a compact control desk. Only the custom channel expands the creative settings.
+
+The player starts black. Click the preview button to watch saved clips or the built-in example; close the preview to return to black without deleting files or stopping generation. Newly started broadcasts still play automatically once buffered.
 
 <details>
 <summary><strong>View the full running interface ↗</strong></summary>
@@ -80,7 +82,7 @@ cd framecurrent
 ./run.command
 ```
 
-Repository access is required during private review. If the scripts lack executable permission, run `chmod +x run.command doctor.command` in the extracted folder.
+If the scripts lack executable permission, run `chmod +x run.command doctor.command` in the extracted folder.
 
 Your browser opens `http://127.0.0.1:4173`. Keep the terminal open while using the app. On subsequent visits, run `run.command` again; a matching existing instance will reopen.
 

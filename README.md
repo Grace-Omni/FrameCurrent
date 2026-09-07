@@ -17,12 +17,12 @@
   <a href="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml"><img alt="Offline verification" src="https://github.com/Grace-Omni/framecurrent/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <img alt="Runtime: macOS" src="https://img.shields.io/badge/runtime-macOS-111713?style=flat-square&amp;labelColor=263026">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-c8ff62?style=flat-square&amp;labelColor=263026"></a>
-  <a href="CHANGELOG.md"><img alt="Version 1.6.2 · experimental" src="https://img.shields.io/badge/v1.6.2-experimental-ffb45e?style=flat-square&amp;labelColor=263026"></a>
+  <a href="CHANGELOG.md"><img alt="Version 1.7.1 · experimental" src="https://img.shields.io/badge/v1.7.1-experimental-ffb45e?style=flat-square&amp;labelColor=263026"></a>
 </p>
 
 连续影像把短片段生成模型组织成一台 **AI 创作电视**：选频道、设定成片长度，软件会串联生成、缓存预览，并在完成后合成 MP4。你可以用它探索动画世界、科幻场景与电影感素材，再把成片放进自己的下一期作品。
 
-> **使用前知道这三点：** 当前是 macOS 本机实验版；生成需要你自己的 fal API Key 和余额；按幕生成需要等待，长片的动作与空间逻辑仍需完整播放检查。仓库目前开放给受邀审核者，尚未公开。
+> **使用前知道这三点：** 当前是 macOS 本机实验版；生成需要你自己的 fal API Key 和余额；按幕生成需要等待，长片的动作与空间逻辑仍需完整播放检查。
 
 <table>
   <tr>
@@ -35,24 +35,26 @@
 ## 频道一览
 
 <p>
-  <img src="web/assets/channel-art-atlas.png" width="100%" alt="五个频道的概念美术：手绘天空岛、深空巨构、综艺舞台、山海列车、月下宫城。">
+  <img src="web/assets/animation-windmeadow-landscape-v1.png" width="100%" alt="日系手绘奇幻频道的横屏内置美术首帧：夏日花草地上的小孩与橘白猫。">
 </p>
-<p><sub>频道概念美术，用于表达视觉方向；不是生成视频样片或效果保证。</sub></p>
+<p><sub>01频道的横屏内置美术首帧，用于启动图生视频；不是生成视频样片或效果保证。</sub></p>
 
 | 频道 | 你将进入的世界 | 适合探索 |
 | :--- | :--- | :--- |
-| **01 · 日系手绘奇幻** | 红色滑翔机、天空群岛、云海与风车 | 动画氛围、飞行漫游 |
-| **02 · 科幻史诗电影** | 深空侦察舰、日蚀、轨道巨构 | 科幻视觉、尺度感镜头 |
-| **03 · 高能棚内综艺** | 单主持人、环形舞台、LED 灯阵 | 棚拍视觉、舞台气氛 |
-| **04 · 旅行电影航拍** | 观景列车、雪峰、湖湾与海岸 | 航拍感素材、风景漫游 |
-| **05 · AI古装短剧** | 女侠、月下宫城、屋脊与灯火 | 古装氛围、单主体跟拍 |
+| **01 · 日系手绘奇幻** | 夏日花草地、草帽小女孩与橘白猫 | 治愈动画、奇幻发现 |
+| **02 · 科幻史诗电影** | 时间勘探者、四季晶体与风暴峡谷 | 科幻视觉、未知探索 |
+| **03 · 高能棚内综艺** | 女歌手、巨型机械月亮与黑红舞台 | 舞台表演、临场惊喜 |
+| **04 · 旅行电影航拍** | 徒步者、火山山脊、海岸与翡翠湖 | 航拍感素材、旅途发现 |
+| **05 · AI古装短剧** | 女将、边关城墙、落日沙暴与烽火 | 古装氛围、戏剧反转 |
 | **＋ · 自定义频道** | 由你设定主体、世界、动作与镜头 | 原创概念、自己的视觉方向 |
 
-预设固定的是创作方向，每次生成的具体画面可能不同。古装与综艺频道提供相应的视觉风格，暂不承担完整剧本、多人物对白或节目编排。
+频道固定视觉风格与初始世界，不预写整期剧情。所有时长均由 AI 结合上一幕画面逐幕即兴续写，推动新的事件与转折；指定时长会在结尾引导当前故事收束。古装与综艺频道暂不提供多人物对白或完整节目编排。
 
 ## 界面实览
 
 **频道选择 → 节目长度 → 播放器与开播台。** 预设频道保持简洁，自定义频道展开创作设置；运行中的任务可以跨频道找回，已保存片段可单独下载。
+
+播放器默认黑屏，点击“预览已生成视频”或“预览示例”才播放已有内容；关闭预览即可回到黑屏，不会删除视频或停止生成。新开播的节目仍会在缓存就绪后自动播放。
 
 <details>
 <summary><strong>展开查看完整运行界面 ↗</strong></summary>

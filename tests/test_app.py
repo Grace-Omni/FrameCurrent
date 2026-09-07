@@ -22,6 +22,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest import mock
+from contextlib import nullcontext
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +41,20 @@ FAKE_FAL_KEY = "offline_test_id:" + "not_a_real_secret_" * 2
 # mirrors the opaque example in the official Platform API documentation.
 DOCS_EXAMPLE_FAL_KEY = "docs_example_id:docs_example_secret_not_real"
 SECRET_START_IMAGE = "data:image/png;base64,private-reference-image"
+
+
+def sample_plan():
+    return {
+        "title": "新的选择", "event_key": "discover-shelter-path",
+        "action": "A gust reveals a sheltered path behind the existing flowers. The girl notices it, signals to her cat and carefully leads it toward this newly visible route, keeping both feet grounded.",
+        "observed_state": "The child and cat stand in the meadow. The hat remains on her head.",
+        "observed_progress": "Only sampled frames are available; intermediate events are uncertain.",
+        "story_memory": "They are in the meadow; no earlier event has been verified.",
+        "cause": "The visible grass parts in a gust.",
+        "state_change": "A newly visible route changes their immediate destination.",
+        "open_thread": "They have not reached the sheltered route yet.",
+        "impact": 4, "repeats_event": False, "repeat_of": [],
+    }
 
 
 class RecordingStopEvent:
@@ -80,7 +95,7 @@ def valid_payload(**overrides):
         "preset": "hand_drawn_fantasy",
         "api_key": FAKE_FAL_KEY,
         "paid_confirmed": True,
-        "max_budget_usd": 15,
+        "max_budget_usd": 20,
     }
     payload.update(overrides)
     return payload
@@ -158,10 +173,11 @@ class ConfigBoundaryTests(unittest.TestCase):
             with self.subTest(preset=preset_id):
                 config = app.validate_start_payload(valid_payload(preset=preset_id))
                 self.assertEqual(config["preset"], preset_id)
-                self.assertGreaterEqual(len(preset["beats"]), 6)
-                prompt = app.build_prompt(config, 0, False)
+                self.assertNotIn("beats", preset)
+                prompt = app.build_prompt(config, 0, False, sample_plan())
                 self.assertIn(preset["base"], prompt)
-                self.assertIn(preset["beats"][0], prompt)
+                self.assertIn("IMPROVISED SCENE", prompt)
+                self.assertIn(sample_plan()["action"], prompt)
 
         for legacy, replacement in app.LEGACY_PRESET_ALIASES.items():
             with self.subTest(legacy=legacy):
@@ -180,7 +196,7 @@ class ConfigBoundaryTests(unittest.TestCase):
         self.assertEqual(len(config["custom_channel_name"]), 40)
         self.assertEqual(len(config["custom_channel_style"]), 300)
         self.assertEqual(config["preset_name"], config["custom_channel_name"])
-        prompt = app.build_prompt(config, 0, False)
+        prompt = app.build_prompt(config, 0, False, sample_plan())
         self.assertIn("CUSTOM CHANNEL STYLE LOCK", prompt)
         self.assertIn(config["custom_channel_style"], prompt)
 
@@ -203,7 +219,7 @@ class ConfigBoundaryTests(unittest.TestCase):
             duration_mode="unlimited",
             duration_seconds="stale-hidden-value",
             clip_duration=10,
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
         config = app.validate_start_payload(unlimited)
         self.assertEqual(config["duration_mode"], "unlimited")
@@ -241,7 +257,7 @@ class ConfigBoundaryTests(unittest.TestCase):
     def test_any_integer_duration_inside_the_range_validates(self):
         for duration in (10, 11, 59, 60, 61, 299, 300, 901, 1799, 1800):
             with self.subTest(duration=duration):
-                budget = app.estimate_cost_usd(duration, "480P")
+                budget = app.estimate_cost_usd(duration, "480P") + len(app.build_clip_schedule(duration, 15)) * 0.04
                 config = app.validate_start_payload(
                     valid_payload(duration_seconds=duration, max_budget_usd=budget)
                 )
@@ -321,7 +337,7 @@ class ConfigBoundaryTests(unittest.TestCase):
         self.assertEqual(app.estimate_cost_usd(300, "480P"), 15.0)
         self.assertEqual(app.estimate_cost_usd(300, "768P"), 24.0)
 
-        for resolution, required in (("480P", 15.0), ("768P", 24.0)):
+        for resolution, required in (("480P", 15.8), ("768P", 24.8)):
             with self.subTest(resolution=resolution):
                 with self.assertRaisesRegex(ValueError, "费用上限不足"):
                     app.validate_start_payload(
@@ -346,10 +362,10 @@ class ConfigBoundaryTests(unittest.TestCase):
             valid_payload(
                 duration_seconds=1800,
                 resolution="768P",
-                max_budget_usd=144,
+                max_budget_usd=148.8,
             )
         )
-        self.assertEqual(accepted["max_budget_usd"], 144)
+        self.assertEqual(accepted["max_budget_usd"], 148.8)
 
         with self.assertRaisesRegex(ValueError, r"不能超过 \$150\.00"):
             app.validate_start_payload(
@@ -361,36 +377,115 @@ class ConfigBoundaryTests(unittest.TestCase):
 
     def test_continuation_prompt_contains_identity_and_camera_locks(self):
         config, _key = validated_config(
+            preset="custom_channel",
+            custom_channel_name="测试频道",
             scene_setting="a connected floating-island route",
             story_action="pass one windmill, then approach a whale",
             camera_direction="steady rear follow",
             avoid_content="no collisions",
         )
-        prompt = app.build_prompt(config, 1, True)
+        prompt = app.build_prompt(config, 1, True, sample_plan())
         self.assertIn("exact first frame", prompt)
         self.assertIn("IDENTITY LOCK", prompt)
         self.assertIn("one continuous take", prompt)
         self.assertIn("portrait 9:16", prompt)
-        self.assertIn("00:00-00:04", prompt)
+        self.assertIn("first 1 second", prompt)
+        self.assertIn("next clearly different story event", prompt)
+        self.assertIn("STORY PROGRESSION", prompt)
+        self.assertIn("large dramatic rises and falls", prompt)
         self.assertIn("never pass through solid geometry", prompt)
         self.assertIn("Do not restart or replay", prompt)
         self.assertIn("WORLD LOCK", prompt)
         self.assertIn("CAMERA LOCK", prompt)
         self.assertNotIn("pass one windmill, then approach a whale", prompt)
 
-        first_prompt = app.build_prompt(config, 0, False)
-        self.assertIn("pass one windmill, then approach a whale", first_prompt)
-        self.assertIn("Do not rush to complete the whole journey", first_prompt)
+        first_prompt = app.build_prompt(config, 0, False, sample_plan())
+        self.assertIn(sample_plan()["action"], first_prompt)
+        self.assertIn("REQUIRED MAJOR CHANGE", first_prompt)
 
-        reference_first_prompt = app.build_prompt(config, 0, True)
+        reference_first_prompt = app.build_prompt(config, 0, True, sample_plan())
         self.assertIn("exact first frame of this new shot", reference_first_prompt)
-        self.assertIn("pass one windmill, then approach a whale", reference_first_prompt)
-        self.assertNotIn("Do not restart or replay", reference_first_prompt)
+        self.assertIn(sample_plan()["action"], reference_first_prompt)
+        self.assertIn("Do not restart or replay", reference_first_prompt)
 
         landscape, _key = validated_config(aspect_ratio="16:9")
-        landscape_prompt = app.build_prompt(landscape, 0, False)
+        landscape_prompt = app.build_prompt(landscape, 0, False, sample_plan())
         self.assertIn("landscape 16:9", landscape_prompt)
         self.assertNotIn("portrait 9:16", landscape_prompt)
+
+    def test_meadow_preset_uses_server_owned_art_and_a_complete_story_arc(self):
+        config = app.validate_start_payload(
+            valid_payload(
+                duration_seconds=30,
+                clip_duration=10,
+                max_budget_usd=2.0,
+                subject_lock="stale flying-machine subject",
+                scene_setting="stale cloud-island world",
+                story_action="repeat one idle loop",
+                camera_direction="stale camera",
+                avoid_content="stale exclusions",
+            )
+        )
+        preset = app.PRESETS["hand_drawn_fantasy"]
+        self.assertEqual(config["preset_revision"], "windmeadow-v1")
+        self.assertEqual(config["subject_lock"], preset["subject"])
+        self.assertEqual(config["scene_setting"], preset["scene_setting"])
+        self.assertNotIn("stale", app.build_prompt(config, 0, True, sample_plan()))
+
+        for index in (0, 1, 18, 100):
+            prompt = app.build_prompt(config, index, True, sample_plan())
+            self.assertIn(sample_plan()["action"], prompt)
+            self.assertNotIn("STORY CHAPTER", prompt)
+            self.assertIn("visibly different action or emotional beat", prompt)
+
+    def test_every_duration_and_channel_requires_a_fresh_scene_plan(self):
+        for mode in ("fixed", "unlimited"):
+            for preset in app.PRESETS:
+                for length in (10, 30, 300, 1800):
+                    config, _ = validated_config(duration_mode=mode, preset=preset,
+                                                 duration_seconds=length, max_budget_usd=150)
+                    self.assertEqual(config["story_mode"], "improvised")
+                    for index in (0, 18, 100):
+                        with self.assertRaises(app.StoryPlanError):
+                            app.build_prompt(config, index, True)
+                        prompt = app.build_prompt(config, index, True, sample_plan())
+                        self.assertIn(sample_plan()["action"], prompt)
+
+    def test_meadow_preset_has_valid_built_in_frames_for_both_orientations(self):
+        for aspect_ratio, size in (("16:9", (1672, 941)), ("9:16", (941, 1672))):
+            with self.subTest(aspect_ratio=aspect_ratio):
+                config = app.validate_start_payload(
+                    valid_payload(aspect_ratio=aspect_ratio)
+                )
+                image = app.preset_start_image(config)
+                self.assertIsNotNone(image)
+                self.assertTrue(image.startswith("data:image/png;base64,"))
+                self.assertEqual(app.validate_start_image(image, aspect_ratio), size)
+
+    def test_selected_channels_have_matching_4k_built_in_frames_and_story_turns(self):
+        selected = {
+            "cinematic_scifi": "time-crystal-canyon-v1",
+            "studio_variety": "mechanical-moon-stage-v1",
+            "travel_aerial": "volcanic-ridge-storm-v1",
+            "costume_drama": "frontier-beacon-v1",
+        }
+        for preset_id, revision in selected.items():
+            with self.subTest(preset=preset_id):
+                preset = app.PRESETS[preset_id]
+                self.assertEqual(preset["revision"], revision)
+                self.assertNotIn("continuation_beats", preset)
+                for aspect_ratio, size in (("16:9", (3840, 2160)), ("9:16", (2160, 3840))):
+                    config = app.validate_start_payload(
+                        valid_payload(preset=preset_id, aspect_ratio=aspect_ratio)
+                    )
+                    image = app.preset_start_image(config)
+                    self.assertIsNotNone(image)
+                    self.assertTrue(image.startswith("data:image/jpeg;base64,"))
+                    self.assertEqual(app.validate_start_image(image, aspect_ratio), size)
+                continuation = app.build_prompt(config, 1, True, sample_plan())
+                self.assertIn("IMPROVISED SCENE", continuation)
+                self.assertIn("CAUSAL BRIDGE", continuation)
+                self.assertIn("screensaver", continuation)
 
     def test_aspect_ratio_is_validated_and_reference_image_must_match(self):
         portrait = app.validate_start_payload(valid_payload(aspect_ratio="9:16"))
@@ -948,7 +1043,7 @@ class PublicStateTests(unittest.TestCase):
         self.assertNotIn("未提交付费", app.public_error_message("Swift媒体工具编译失败"))
         self.assertIn("内容安全", app.public_error_message("safety checker rejected"))
 
-    def run_with_offline_media(self, session, generate_side_effect):
+    def run_with_offline_media(self, session, generate_side_effect, real_director=False):
         def fake_download(_url, destination):
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(b"offline-video" * 200)
@@ -987,7 +1082,9 @@ class PublicStateTests(unittest.TestCase):
             app, "compare_images", return_value=1.0
         ), mock.patch.object(
             app, "merge_session_clips", side_effect=fake_merge
-        ) as merge, mock.patch.object(app, "prepare_media_tools"):
+        ) as merge, mock.patch.object(app, "prepare_media_tools"), (
+            nullcontext() if real_director else mock.patch.object(app, "plan_scene", return_value=sample_plan())
+        ):
             app.run_session(session)
         return generate, merge
 
@@ -1059,9 +1156,11 @@ class PublicStateTests(unittest.TestCase):
 
     def test_start_image_is_used_once_then_released_from_session_memory(self):
         session = self.make_session(
+            preset="custom_channel",
+            custom_channel_name="横屏测试频道",
             duration_seconds=10,
             clip_duration=10,
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
         session.config["start_image"] = SECRET_START_IMAGE
         seen_images = []
@@ -1120,7 +1219,7 @@ class PublicStateTests(unittest.TestCase):
         session = self.make_session(
             duration_seconds=10,
             clip_duration=10,
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
 
         def fake_generate(_endpoint, _arguments, _key, event, progress):
@@ -1181,7 +1280,7 @@ class PublicStateTests(unittest.TestCase):
                     "duration_mode": duration_mode,
                     "duration_seconds": 10,
                     "clip_duration": 10,
-                    "max_budget_usd": 0.5,
+                    "max_budget_usd": 0.54,
                 }
                 session = self.make_session(**overrides)
                 session.stop_event.set()
@@ -1234,7 +1333,7 @@ class PublicStateTests(unittest.TestCase):
         fixed = self.make_session(
             duration_seconds=20,
             clip_duration=10,
-            max_budget_usd=1.0,
+            max_budget_usd=1.08,
         )
         fixed.clips = [clip_record(1, 10)]
         fixed.generated_seconds = 10
@@ -1447,7 +1546,8 @@ class PublicStateTests(unittest.TestCase):
         )
         with mock.patch.object(
             app, "fal_generate", side_effect=rejected
-        ), mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"):
+        ), mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"), \
+             mock.patch.object(app, "plan_scene", return_value=sample_plan()):
             app.run_session(session)
         public = session.public()
         self.assertEqual(public["status"], "failed")
@@ -1458,15 +1558,18 @@ class PublicStateTests(unittest.TestCase):
 
     def test_landscape_session_passes_aspect_ratio_to_first_text_to_video_job(self):
         session = self.make_session(
+            preset="custom_channel",
+            custom_channel_name="横屏测试频道",
             duration_seconds=10,
             clip_duration=10,
             aspect_ratio="16:9",
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
         rejected_after_capture = RuntimeError("offline stop after argument capture")
         with mock.patch.object(
             app, "fal_generate", side_effect=rejected_after_capture
-        ) as generate, mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"):
+        ) as generate, mock.patch.object(app.traceback, "print_exc"), mock.patch.object(app, "prepare_media_tools"), \
+             mock.patch.object(app, "plan_scene", return_value=sample_plan()):
             app.run_session(session)
 
         endpoint, arguments = generate.call_args.args[:2]
@@ -1480,7 +1583,7 @@ class PublicStateTests(unittest.TestCase):
             duration_seconds=10,
             clip_duration=10,
             aspect_ratio="16:9",
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
         session.directory.mkdir(parents=True)
         session.status = "complete"
@@ -2182,7 +2285,7 @@ class HttpBoundaryTests(unittest.TestCase):
                     duration_seconds=47,
                     clip_duration=15,
                     aspect_ratio="16:9",
-                    max_budget_usd=2.35,
+                    max_budget_usd=2.51,
                 ),
             )
 
@@ -2202,7 +2305,7 @@ class HttpBoundaryTests(unittest.TestCase):
         payload = valid_payload(
             duration_mode="unlimited",
             clip_duration=10,
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
             preset="custom_channel",
             custom_channel_name="夜航频道",
             custom_channel_style="深蓝电影夜景",
@@ -2319,7 +2422,7 @@ class HttpBoundaryTests(unittest.TestCase):
         config, key = validated_config(
             duration_mode="unlimited",
             clip_duration=10,
-            max_budget_usd=0.5,
+            max_budget_usd=0.54,
         )
         session = app.SessionState("unlimited-download", config, api_key=key)
         session.directory.mkdir(parents=True, exist_ok=True)

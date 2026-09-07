@@ -2,6 +2,10 @@
 /runtime/
 /real-test/
 /docs/brand/concepts/
+/web/assets/channel-candidates/
+/web/channel-candidates.html
+/web/channel-candidates.css
+/web/channel-candidates.js
 
 # Python and editor caches
 __pycache__/
@@ -28,6 +32,8 @@ __pycache__/
 *.partial
 *.log
 *.mp4
+# The single curated, project-owned example ships with the preview button.
+!/web/assets/animation-windmeadow-showcase-20s-v1.mp4
 *.mov
 *.m4v
 *.webm
